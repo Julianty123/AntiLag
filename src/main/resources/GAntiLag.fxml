@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="305.0" prefWidth="247.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GAntiLag">
+   <children>
+      <CheckBox fx:id="checkClickThrough" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#Click_through" text="Click Through" />
+      <CheckBox fx:id="checkHideSpeech" layoutX="14.0" layoutY="177.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Speech" />
+      <CheckBox fx:id="checkHideShoutOut" layoutX="14.0" layoutY="202.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Shout Out" />
+      <CheckBox fx:id="checkHideDance" layoutX="14.0" layoutY="228.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Dance (not recommended)" />
+      <CheckBox fx:id="checkFreezeUsers" layoutX="14.0" layoutY="252.0" mnemonicParsing="false" onAction="#Click_through" text="Freeze Users (not recommended)" />
+      <CheckBox fx:id="checkIgnoreWhispers" layoutX="14.0" layoutY="277.0" mnemonicParsing="false" onAction="#Click_through" text="Ignore Whispers" />
+      <CheckBox fx:id="checkHideFloorItems" layoutX="14.0" layoutY="107.0" mnemonicParsing="false" onAction="#Click_through" text="Hide FloorItems" />
+      <CheckBox fx:id="checkHideWallItems" layoutX="14.0" layoutY="131.0" mnemonicParsing="false" onAction="#Click_through" text="Hide WallItems" />
+      <CheckBox fx:id="checkHideBubbles" layoutX="14.0" layoutY="153.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Bubbles (You and the others)" />
+      <CheckBox fx:id="checkClickHide" layoutX="4.0" layoutY="40.0" mnemonicParsing="false" text="Double click for hide (Danger of crashing)" />
+      <CheckBox fx:id="checkDisableDouble" layoutX="14.0" layoutY="64.0" mnemonicParsing="false" onAction="#handleDoubleClick" text="Disable double click" />
+      <CheckBox fx:id="checkUsersToRemove" layoutX="14.0" layoutY="86.0" mnemonicParsing="false" text="Click users to remove (Restart room)" />
+   </children>
+</AnchorPane>
