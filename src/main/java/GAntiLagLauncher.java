@@ -18,6 +18,7 @@ public class GAntiLagLauncher extends ExtensionFormCreator {
         primaryStage.setAlwaysOnTop(true);
 
         return loader.getController();
+        // test!
     }
 
     public static void main(String[] args) {
