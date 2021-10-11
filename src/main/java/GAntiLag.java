@@ -10,7 +10,7 @@ import java.util.TreeMap;
 @ExtensionInfo(
         Title = "GAntiLag",
         Description = "Allows you funny options",
-        Version = "1",
+        Version = "1.0",
         Author = "Julianty"
 )
 
