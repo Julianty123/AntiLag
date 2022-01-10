@@ -1,28 +1,46 @@
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.ExtensionInfo;
 import gearth.extensions.parsers.HEntity;
+import gearth.extensions.parsers.HFloorItem;
+import gearth.extensions.parsers.HWallItem;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
-import javafx.event.ActionEvent;
+import javafx.application.Platform;
 import javafx.scene.control.CheckBox;
+
+import javax.swing.*;
+import java.util.LinkedList;
 import java.util.TreeMap;
 
 @ExtensionInfo(
         Title = "GAntiLag",
         Description = "Allows you funny options",
-        Version = "1.0",
+        Version = "1.0.1",
         Author = "Julianty"
 )
 
 public class GAntiLag extends ExtensionForm {
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough,
             checkHideDance, checkFreezeUsers, checkIgnoreWhispers, checkHideFloorItems,
-            checkHideWallItems, checkHideBubbles, checkClickHide, checkDisableDouble, checkUsersToRemove;
+            checkHideWallItems, checkHideBubbles, checkClickHide, checkDisableDouble, checkUsersToRemove, checkAntiBobba;
 
     TreeMap<Integer,Integer> IdAndIndex = new TreeMap<>();
+    LinkedList<Integer> hiddenFloorList = new LinkedList<>();
+    LinkedList<Integer> hiddenWallList = new LinkedList<>();
 
     // public Text textRequests; //Se podria usar como un "label" porque asi funciona... wtf
     public int UserID;
+
+    // To fix the bug... bruh :(
+    Timer timer1 = new Timer(1, e -> {
+        for (Integer furniId : hiddenFloorList) {
+            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, UserID, 0));
+        }
+        for (Integer furniId : hiddenWallList) {
+            sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), UserID));
+        }
+        stopTimer();
+    });
 
     @Override
     protected void onShow() {
@@ -39,7 +57,18 @@ public class GAntiLag extends ExtensionForm {
             checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
             checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
             checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkFreezeUsers.setSelected(false);
-            checkIgnoreWhispers.setSelected(false);
+            checkIgnoreWhispers.setSelected(false); checkAntiBobba.setSelected(false);
+            hiddenFloorList.clear(); checkClickHide.setText("Double click for hide (" + hiddenFloorList.size() + ")");
+            sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
+        });
+
+        // Cuando se chequea o deschequea el box
+        checkHideFloorItems.setOnAction(e-> sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER)));
+        checkHideWallItems.setOnAction(e -> sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER)));
+        checkUsersToRemove.setOnAction(e -> {
+            if(!checkUsersToRemove.isSelected()){
+                sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
+            }
         });
 
         // The packet is sent to the server and a response is obtained from the CLIENT !!
@@ -80,28 +109,76 @@ public class GAntiLag extends ExtensionForm {
 
         // Intercepts doble click to floor item
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
-            if(checkDisableDouble.isSelected()){ // Bloquea el doble click
-                hMessage.setBlocked(true);
+            if(checkDisableDouble.isSelected()){
+                hMessage.setBlocked(true);  // Blocks double click
             }
-            if(checkClickHide.isSelected()){ // Oculta furnis de piso
+            if(checkClickHide.isSelected()){
+                int furniId = hMessage.getPacket().readInteger();   hiddenFloorList.add(furniId);
                 sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
-                                String.valueOf(hMessage.getPacket().readInteger()), false, UserID, 0));
+                                String.valueOf(furniId), false, UserID, 0)); // Hide Floor Item
+                int count = hiddenFloorList.size() + hiddenWallList.size();
+                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
             }
         });
 
         // Intercepts doble click to wall item
         intercept(HMessage.Direction.TOSERVER, "UseWallItem", hMessage -> {
-            if(checkClickHide.isSelected()){ // Hide wall item
+            if(checkClickHide.isSelected()){
+                int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(hMessage.getPacket().readInteger()), UserID));
+                        String.valueOf(furniId), UserID)); // Hide Wall Item
+                int count = hiddenFloorList.size() + hiddenWallList.size();
+                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
+            }
+        });
+        intercept(HMessage.Direction.TOSERVER, "GetItemData", hMessage -> { // When you give click in a stickie (notes)
+            if(checkClickHide.isSelected()){
+                int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
+                sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
+                        String.valueOf(furniId), UserID)); // Hide Wall Item
+                int count = hiddenFloorList.size() + hiddenWallList.size();
+                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
             }
         });
 
         // When a user arrives to room
         intercept(HMessage.Direction.TOCLIENT, "Users", hMessage -> {
-            if(checkClickThrough.isSelected()){ // Habilita de nuevo "Click Through"
+            if(checkClickThrough.isSelected()){ // Allows again "Click Through"
                 sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, true));
             }
+        });
+
+        // Oculta los furnis de suelo en la sala
+        intercept(HMessage.Direction.TOCLIENT, "Objects", hMessage -> {
+            try{
+                for (HFloorItem hFloorItem: HFloorItem.parse(hMessage.getPacket())){
+                    if(checkHideFloorItems.isSelected()){
+                        // Se pueden enviar muchos paquetes al cliente sin importar su delay
+                        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
+                                String.valueOf(hFloorItem.getId()), false, UserID, 0));
+                        hMessage.setBlocked(true); // Solve bug wtf
+                    }
+                    if(hiddenFloorList.contains(hFloorItem.getId())){
+                        timer1.start();
+                    }
+                }
+            }catch (Exception ignored){}
+        });
+
+        // Oculta los furnis de pared en la sala
+        intercept(HMessage.Direction.TOCLIENT, "Items", hMessage -> {
+            try{
+                for (HWallItem hWallItem: HWallItem.parse(hMessage.getPacket())){
+                    if(checkHideWallItems.isSelected()){
+                        sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
+                                String.valueOf(hWallItem.getId()), UserID));
+                        hMessage.setBlocked(true);
+                    }
+                    if(hiddenWallList.contains(hWallItem.getId())){
+                        timer1.start();
+                    }
+                }
+            }catch (Exception ignored){}
         });
 
         // Ignora cuando un usuario habla en sala (Me ignoro pero los demas NO a mi)
@@ -153,22 +230,33 @@ public class GAntiLag extends ExtensionForm {
             }
         });
 
-        // Oculta los furnis de suelo en la sala
-        intercept(HMessage.Direction.TOCLIENT, "Objects", hMessage -> {
-            if(checkHideFloorItems.isSelected()){
+        // Thanks to Achantur for the special character, you can see it here: https://github.com/achantur/AntiBobba
+        intercept(HMessage.Direction.TOSERVER, "Chat", hMessage -> {
+            String message = hMessage.getPacket().readString();
+            int color = hMessage.getPacket().readInteger();
+            int index = hMessage.getPacket().readInteger();
+            if (checkAntiBobba.isSelected()) {
                 hMessage.setBlocked(true);
-            }
-        });
-
-        // Oculta los furnis de pared en la sala
-        intercept(HMessage.Direction.TOCLIENT, "Items", hMessage -> {
-            if(checkHideWallItems.isSelected()){
-                hMessage.setBlocked(true);
+                bypass(message, color, index);
             }
         });
     }
 
-    public void Click_through(ActionEvent actionEvent){
+    public void stopTimer(){
+        timer1.stop();
+    }
+
+    private void bypass(String message, int color, int index) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (char ch : message.toCharArray()) {
+            stringBuilder.append("ӵӵ"); // ӵӵ Its the special character
+            stringBuilder.append(ch);
+        }
+        stringBuilder.append("ӵӵ");
+        sendToServer(new HPacket("Chat", HMessage.Direction.TOSERVER, stringBuilder.toString(), color, index));
+    }
+
+    public void Click_through(){
         if(checkClickThrough.isSelected()){
             sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, true));   // Habilita "Click Through"
         }
@@ -183,6 +271,14 @@ public class GAntiLag extends ExtensionForm {
         }
         else {
             checkClickHide.setDisable(false);
+        }
+    }
+
+    public void handleHiddenList() {
+        if(!checkHideFloorItems.isSelected()){
+            hiddenFloorList.clear(); hiddenWallList.clear();
+            sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
+            checkClickHide.setText("Double click for hide (0)");
         }
     }
 }
