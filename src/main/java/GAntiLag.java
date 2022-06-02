@@ -12,6 +12,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -27,13 +28,14 @@ import org.apache.commons.io.IOUtils; // Important library for openConnection (S
         Author = "Julianty"
 )
 
-
 public class GAntiLag extends ExtensionForm implements Initializable{
     public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful
 
+    // private static volatile Instrumentation globalInstrumentation;
+
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough,
-            checkHideDance, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
-            checkHideBubbles, checkClickHide, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkFastRoom, checkWalkFast;
+            checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
+            checkHideBubbles, checkClickHide, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
     public TextField textSteps;
     public TableView<Furniture> tableView;
 
@@ -108,18 +110,8 @@ public class GAntiLag extends ExtensionForm implements Initializable{
         stopTimer();
     });
 
-    // Necessary to solve a "bug", you must give two clicks or more when you get outs the teleport...
+    // Necessary to solve a "bug", i think you have to click at the correct time, so with this you will give many clicks..
     Timer timerFixBug = new Timer(1, e -> sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, walkToX, walkToY)));
-
-    @Override
-    protected void onShow() {
-        // The packet is sent to the server and a response is obtained from the CLIENT !!
-        sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
-        // When its sent, get UserIndex without restart room
-        sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));
-        // When its sent, get wallitems, flooritems and other things without restart room
-        sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
-    }
 
     @Override
     protected void initExtension() {
@@ -127,19 +119,21 @@ public class GAntiLag extends ExtensionForm implements Initializable{
 
         onConnect((host, port, APIVersion, versionClient, client) -> {
             this.host = host.substring(5, 7);   // Example: Of "game-es.habbo.com" only takes "es"
-            System.out.println("Getting GameData...");
-            try { getGameFurniData(); } catch (Exception ignored) { }
-            System.out.println("Gamedata Retrieved!");
+            new Thread(()->{
+                System.out.println("Getting GameData...");
+                try { getGameFurniData(); } catch (Exception ignored) { }
+                System.out.println("Gamedata Retrieved!");
+            }).start();
         });
 
-        // Detecta cuando el usuario cierra la ventana (En este proyecto solo funciona aqui)
+        // Detects when the user close the window (In this project only works here)
         primaryStage.setOnCloseRequest(e -> {
             sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, false));
             checkClickThrough.setSelected(false);
             checkClickHide.setSelected(false);  checkClickHide.setDisable(false);   checkDisableDouble.setSelected(false);
             checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
             checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
-            checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);
+            checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
             checkIgnoreWhispers.setSelected(false); checkAntiBobba.setSelected(false);
             sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));     YourIndex = -1;
         });
@@ -218,7 +212,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             } catch (Exception e) { e.printStackTrace(); }
         });
 
-        // Intercepts doble click to floor item
+        // Intercepts double click to floor item
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
             if(checkDisableDouble.isSelected()){
                 hMessage.setBlocked(true);  // Blocks double click
@@ -232,7 +226,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             }
         });
 
-        // Intercepts doble click to wall item
+        // Intercepts double click to wall item
         intercept(HMessage.Direction.TOSERVER, "UseWallItem", hMessage -> {
             if(checkClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
@@ -262,10 +256,15 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                     Necesito encontrar la forma de detectar si el furni es background (no tiene direction, creo)
                     quizas usando un if y un else if con hFloorItem.getFacing() podria ser util! */
 
-                    // System.out.println("ID: " + hFloorItem.getId() + " ; police: " + hFloorItem.getUsagePolicy() + " ;list: " + Arrays.toString(hFloorItem.getStuff()));
-
-                    flagListforTableView.add(new Furniture(indexCounter, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
-                            hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                    List<?> list = Arrays.asList(hFloorItem.getStuff()); // To parse!
+                    if(!list.get(0).equals("")){ // not empty list
+                        flagListforTableView.add(new Furniture(indexCounter, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                                hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), (String) list.get(0),hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                    }
+                    else if(list.get(0).equals("")){ // empty list
+                        flagListforTableView.add(new Furniture(indexCounter, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                                hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), "0", hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                    }
                     indexCounter++;
 
 
@@ -278,6 +277,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                         timer1.start();
                     }
                 }catch (Exception ignored){
+                    // Excepcion porque este tipo de furnis no tiene direccion (hFloorItem.getFacing())
                     System.out.println("Excepcion");
                 }
             }
@@ -297,13 +297,13 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             int flagIndex = 0;
             for(List<Integer> ids: overview.values()){
                 tableView.getItems().add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
-                        "0.0", 1, "a"));
+                        "0.0", "0", 1, "a"));
                 flagIndex++;
             }
             flagIndex = 0;
             for(String className: overview.keySet()){
                 tableView.getItems().set(flagIndex, new Furniture(flagIndex, tableView.getItems().get(flagIndex).getFurniId(), className,
-                        0, 0, 0, 0, "0.0", 0, "a"));
+                        0, 0, 0, 0, "0.0", "0", 0, "a"));
                 flagIndex++;
             }
         });
@@ -338,6 +338,12 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             }
         });
 
+        intercept(HMessage.Direction.TOCLIENT, "AvatarEffect", hMessage -> {
+            if(checkHideEffect.isSelected()){
+                hMessage.setBlocked(true);
+            }
+        });
+
         // Ignora la gente que te susurra (Me ignoro pero los demas NO a mi)
         intercept(HMessage.Direction.TOCLIENT, "Whisper", hMessage -> {
             if(checkIgnoreWhispers.isSelected()){
@@ -366,20 +372,10 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             }
         });
 
-        intercept(HMessage.Direction.TOSERVER, "OpenFlatConnection", hMessage -> {
-            if(checkFastRoom.isSelected()){
-                int roomID = hMessage.getPacket().readInteger();
-                // I'm not sure if this option is useful or real
-                sendToServer(new HPacket("OpenFlatConnection", HMessage.Direction.TOSERVER, roomID, "", -1));
-            }
-        });
-
-        // MichelC1
         intercept(HMessage.Direction.TOCLIENT, "UserUpdate", hMessage -> {
             for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hMessage.getPacket())){
                 int CurrentIndex = hEntityUpdate.getIndex();  // HEntityUpdate class allows get UserIndex
                 if(YourIndex == CurrentIndex){
-
                     int currentCoordX, currentCoordY;
                     String currentDirection = hEntityUpdate.getBodyFacing().toString();
                     try {
@@ -414,6 +410,10 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                     }
                     if(currentCoordX == walkToX && currentCoordY == walkToY) { timerFixBug.stop(); }    // Detiene el timer cuando alcanza la posicion
                 }
+
+                if(checkHideSign.isSelected() && hEntityUpdate.getSign() != null){
+                    hMessage.setBlocked(true);
+                }
             }
         });
 
@@ -429,9 +429,17 @@ public class GAntiLag extends ExtensionForm implements Initializable{
         });
     }
 
-    // Interesting you can see the furni is walkable or no with canstandon
+    public void sendPackets(){
+        // The packet is sent to the server and a response is obtained from the CLIENT !!
+        sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
+        // When its sent, get UserIndex without restart room
+        sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));
+        // When its sent, get wallitems, flooritems and other things without restart room
+        sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
+    }
+
     private void getGameFurniData() throws Exception{
-        String str = "https://www.habbo%s/gamedata/furnidata_json/1";
+        String str = "https://www.habbo%s/gamedata/furnidata_json/1"; // You can see the furni is walkable or no with canstandon
         JSONObject jsonObj = new JSONObject(IOUtils.toString(new URL(String.format(str, codeToDomainMap.get(host))).openStream(), StandardCharsets.UTF_8));
         JSONArray floorJson = jsonObj.getJSONObject("roomitemtypes").getJSONArray("furnitype");
         floorJson.forEach(o -> {
@@ -439,6 +447,8 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             nameToTypeidFloor.put(item.getString("classname"), item.getInt("id"));
             typeIdToNameFloor.put(item.getInt("id"), item.getString("classname"));
         });
+
+        sendPackets(); // Once the API is loaded, the packets are sent to get the room data
     }
 
     public void stopTimer(){

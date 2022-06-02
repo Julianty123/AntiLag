@@ -15,29 +15,30 @@
     <TabPane layoutX="14.0" layoutY="16.0" prefHeight="523.0" prefWidth="397.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="General">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                <Pane layoutX="52.0" layoutY="30.0" prefHeight="330.0" prefWidth="301.0" style="-fx-border-radius: 20px; -fx-border-color: #888888;">
+                <Pane layoutX="48.0" layoutY="32.0" prefHeight="367.0" prefWidth="301.0" style="-fx-border-radius: 20px; -fx-border-color: #888888;">
                     <CheckBox fx:id="checkClickThrough" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#Click_through" text="Click Through" />
                     <CheckBox fx:id="checkHideSpeech" layoutX="14.0" layoutY="177.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Speech" />
                     <CheckBox fx:id="checkHideShoutOut" layoutX="14.0" layoutY="202.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Shout Out" />
-                    <CheckBox fx:id="checkHideDance" layoutX="14.0" layoutY="228.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Dance (not recommended)" />
-                    <CheckBox fx:id="checkIgnoreWhispers" layoutX="14.0" layoutY="255.0" mnemonicParsing="false" onAction="#Click_through" text="Ignore Whispers" />
+                    <CheckBox fx:id="checkHideDance" layoutX="14.0" layoutY="278.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Dance (not recommended)" />
+                    <CheckBox fx:id="checkIgnoreWhispers" layoutX="14.0" layoutY="304.0" mnemonicParsing="false" onAction="#Click_through" text="Ignore Whispers" />
                     <CheckBox fx:id="checkHideFloorItems" layoutX="14.0" layoutY="107.0" mnemonicParsing="false" text="Hide FloorItems" />
                     <CheckBox fx:id="checkHideWallItems" layoutX="14.0" layoutY="131.0" mnemonicParsing="false" text="Hide WallItems" />
                     <CheckBox fx:id="checkHideBubbles" layoutX="14.0" layoutY="153.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Bubbles (You and the others)" />
                     <CheckBox fx:id="checkClickHide" layoutX="14.0" layoutY="40.0" mnemonicParsing="false" text="Double click for hide (0) " />
                     <CheckBox fx:id="checkDisableDouble" layoutX="14.0" layoutY="64.0" mnemonicParsing="false" onAction="#handleDoubleClick" text="Disable double click" />
                     <CheckBox fx:id="checkUsersToRemove" layoutX="14.0" layoutY="86.0" mnemonicParsing="false" text="Click users to remove" />
-                    <CheckBox fx:id="checkAntiBobba" layoutX="14.0" layoutY="282.0" mnemonicParsing="false" text="Anti Bobba (Vulnerable to flood)" />
+                    <CheckBox fx:id="checkAntiBobba" layoutX="14.0" layoutY="329.0" mnemonicParsing="false" text="Anti Bobba (Vulnerable to flood)" />
                     <Button layoutX="214.0" layoutY="38.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="23.0" prefWidth="46.0" text="Clear">
                         <font>
                             <Font size="12.0" />
                         </font>
                     </Button>
+               <CheckBox fx:id="checkHideSign" layoutX="14.0" layoutY="227.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Sign" />
+               <CheckBox fx:id="checkHideEffect" layoutX="14.0" layoutY="252.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Effect" />
                 </Pane>
-                <CheckBox fx:id="checkFastRoom" layoutX="67.0" layoutY="379.0" mnemonicParsing="false" text="&quot;Fast Room&quot;" />
-                <TextField fx:id="textSteps" alignment="CENTER" layoutX="229.0" layoutY="405.0" prefHeight="31.0" prefWidth="39.0" text="1" />
-                <Text layoutX="183.0" layoutY="426.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Steps:" />
-                <CheckBox fx:id="checkWalkFast" layoutX="67.0" layoutY="410.0" mnemonicParsing="false" text="Walk Fast" />
+                <TextField fx:id="textSteps" alignment="CENTER" layoutX="247.0" layoutY="424.0" prefHeight="31.0" prefWidth="39.0" text="1" />
+                <Text layoutX="201.0" layoutY="445.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Steps:" />
+                <CheckBox fx:id="checkWalkFast" layoutX="85.0" layoutY="429.0" mnemonicParsing="false" text="Walk Fast" />
             </AnchorPane>
         </Tab>
         <Tab text="Furnitures">
