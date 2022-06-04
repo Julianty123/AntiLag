@@ -5,18 +5,17 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.lang.instrument.Instrumentation;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Timer;
 import org.apache.commons.io.IOUtils; // Important library for openConnection (See json or something like that!)
 
@@ -24,11 +23,11 @@ import org.apache.commons.io.IOUtils; // Important library for openConnection (S
 @ExtensionInfo(
         Title = "GAntiLag",
         Description = "Allows you useful and funny options",
-        Version = "1.0.2",
+        Version = "1.3.2",
         Author = "Julianty"
 )
 
-public class GAntiLag extends ExtensionForm implements Initializable{
+public class GAntiLag extends ExtensionForm implements Initializable {
     public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful
 
     // private static volatile Instrumentation globalInstrumentation;
@@ -38,6 +37,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             checkHideBubbles, checkClickHide, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
     public TextField textSteps;
     public TableView<Furniture> tableView;
+    public ListView<String> listNotePad;
 
     TreeMap<String, Integer> nameToTypeidFloor = new TreeMap<>();
     TreeMap<Integer, String> typeIdToNameFloor = new TreeMap<>();
@@ -45,8 +45,9 @@ public class GAntiLag extends ExtensionForm implements Initializable{
     LinkedList<Integer> hiddenFloorList = new LinkedList<>();
     LinkedList<Integer> hiddenWallList = new LinkedList<>();
     LinkedList<Furniture> flagListforTableView = new LinkedList<>();
+    // LinkedList<Integer> wallListNotePad = new LinkedList<>(); coming soon!
 
-    public int indexCounter;
+    public int counterFloorItems;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -100,6 +101,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
     public int YourIndex = -1;
 
     // To fix the bug... bruh :(
+    public int countTimerFixBug;
     Timer timer1 = new Timer(1, e -> {
         for (Integer furniId : hiddenFloorList) {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, YourUserID, 0));
@@ -107,11 +109,24 @@ public class GAntiLag extends ExtensionForm implements Initializable{
         for (Integer furniId : hiddenWallList) {
             sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), YourUserID));
         }
-        stopTimer();
+        countTimerFixBug++;
+        System.out.println("Timer Fix Bug: " + countTimerFixBug);
+        if(countTimerFixBug >= 100){
+            stopTimer();    countTimerFixBug = 0;
+        }
     });
 
     // Necessary to solve a "bug", i think you have to click at the correct time, so with this you will give many clicks..
     Timer timerFixBug = new Timer(1, e -> sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, walkToX, walkToY)));
+
+    @Override
+    protected void onStartConnection() {
+        new Thread(() -> { //
+            System.out.println("Getting GameData...");
+            try { getGameFurniData(); } catch (Exception ignored) { }
+            System.out.println("Gamedata Retrieved!");
+        }).start();
+    }
 
     @Override
     protected void initExtension() {
@@ -119,11 +134,6 @@ public class GAntiLag extends ExtensionForm implements Initializable{
 
         onConnect((host, port, APIVersion, versionClient, client) -> {
             this.host = host.substring(5, 7);   // Example: Of "game-es.habbo.com" only takes "es"
-            new Thread(()->{
-                System.out.println("Getting GameData...");
-                try { getGameFurniData(); } catch (Exception ignored) { }
-                System.out.println("Gamedata Retrieved!");
-            }).start();
         });
 
         // Detects when the user close the window (In this project only works here)
@@ -222,7 +232,10 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                 sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
                                 String.valueOf(furniId), false, YourUserID, 0)); // Hide Floor Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
-                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
+                Platform.runLater(()-> {
+                    listNotePad.getItems().add("FloorItemId: " + furniId);
+                    checkClickHide.setText("Double click for hide (" + count + ")");
+                });
             }
         });
 
@@ -258,14 +271,14 @@ public class GAntiLag extends ExtensionForm implements Initializable{
 
                     List<?> list = Arrays.asList(hFloorItem.getStuff()); // To parse!
                     if(!list.get(0).equals("")){ // not empty list
-                        flagListforTableView.add(new Furniture(indexCounter, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                        flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
                                 hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), (String) list.get(0),hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
                     }
                     else if(list.get(0).equals("")){ // empty list
-                        flagListforTableView.add(new Furniture(indexCounter, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                        flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
                                 hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), "0", hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
                     }
-                    indexCounter++;
+                    counterFloorItems++;
 
 
                     if(checkHideFloorItems.isSelected()){
@@ -273,7 +286,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                         sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, YourUserID, 0));
                         hMessage.setBlocked(true); // Solve bug wtf
                     }
-                    if(hiddenFloorList.contains(hFloorItem.getId())){
+                    if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
                         timer1.start();
                     }
                 }catch (Exception ignored){
@@ -287,7 +300,6 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             }
 
             // flagListforTableView.sort(Person.CASE_INSENSITIVE_ORDER);    // Ordena los items de la tabla,segun algun parametro
-
             Map<String, List<Integer>> overview = new HashMap<>();
             for (Furniture entry : flagListforTableView) {
                 overview.putIfAbsent(entry.getClassName(), new ArrayList<>());
@@ -317,7 +329,7 @@ public class GAntiLag extends ExtensionForm implements Initializable{
                                 String.valueOf(hWallItem.getId()), YourUserID)); // "Hide" wall items
                         hMessage.setBlocked(true);  // Fix the bug
                     }
-                    if(hiddenWallList.contains(hWallItem.getId())){
+                    if(hiddenWallList.contains(hWallItem.getId()) && primaryStage.isShowing()){
                         timer1.start();
                     }
                 }
@@ -494,8 +506,61 @@ public class GAntiLag extends ExtensionForm implements Initializable{
             }*/
             sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
         }
-        hiddenFloorList.clear(); hiddenWallList.clear();
+        hiddenFloorList.clear(); hiddenWallList.clear();    listNotePad.getItems().clear();
         checkClickHide.setText("Double click for hide (0)");
+    }
+
+    public void saveConfig() throws RuntimeException, IOException {
+        // Configuracion de la ventana para guardar
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Configuration");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text File", "*.txt"));
+        File file = fileChooser.showSaveDialog(primaryStage);
+
+        try {
+            FileWriter fileWriter = new FileWriter(file);
+            for(String line: listNotePad.getItems()){
+                fileWriter.write(line);
+                fileWriter.write("\n");
+            }
+            fileWriter.flush();
+            fileWriter.close();
+        }catch (RuntimeException ignored){} // Evita una excepcion cuando se cierra la ventana sin guardar
+    }
+
+    public void loadConfig() throws IOException, RuntimeException{
+        // Configuracion de la ventana para cargar
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load Configuration");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text File", "*.txt"));
+        File file = fileChooser.showOpenDialog(primaryStage);
+
+        try{
+            BufferedReader bReader = new BufferedReader(new FileReader(file));   // lee el archivo .txt seleccionado
+            readData(bReader);
+        }catch (RuntimeException ignored){}
+    }
+
+    public void readData(BufferedReader bufferedReader) {
+        try{
+            AtomicInteger counterLine = new AtomicInteger();
+            bufferedReader.lines().forEach(line->{
+                String[] split = line.split(" ");
+                String tagName = split[0];  // FloorItemId: or WallItemId:
+                String id = split[1];
+                listNotePad.getItems().add(tagName + " " + id);
+                hiddenFloorList.add(Integer.parseInt(id));
+                counterLine.getAndIncrement();
+            });
+            timer1.start();
+            Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + counterLine + ")"));
+        }catch (RuntimeException runtimeException){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.initOwner(primaryStage);
+            alert.setHeaderText("We are sorry :(");
+            alert.setOnShowing(event -> alert.setContentText("Error loading the configuration, the format could be wrong."));
+            alert.show();
+        }
     }
 }
             /*

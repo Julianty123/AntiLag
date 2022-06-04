@@ -3,6 +3,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+// I must admit that adding a Table with CheckBox was possible thanks to WiredSpast
 public class AtomicCheckBoxTableCell extends CheckBoxTableCell<Furniture, AtomicBoolean> {
 
     @Override   // This is very important!
