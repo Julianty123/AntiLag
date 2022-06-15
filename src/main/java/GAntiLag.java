@@ -4,6 +4,10 @@ import gearth.extensions.parsers.*;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -31,6 +35,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful
 
     // private static volatile Instrumentation globalInstrumentation;
+    private final static ObservableList<Furniture> dataList = FXCollections.observableArrayList();
 
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough,
             checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
@@ -121,7 +126,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     @Override
     protected void onStartConnection() {
-        new Thread(() -> { //
+        new Thread(() -> {
             System.out.println("Getting GameData...");
             try { getGameFurniData(); } catch (Exception ignored) { }
             System.out.println("Gamedata Retrieved!");
@@ -246,7 +251,10 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
                         String.valueOf(furniId), YourUserID)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
-                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
+                Platform.runLater(()-> {
+                    listNotePad.getItems().add("WallItemId: " + furniId);
+                    checkClickHide.setText("Double click for hide (" + count + ")");
+                });
             }
         });
         intercept(HMessage.Direction.TOSERVER, "GetItemData", hMessage -> { // When you give click in a stickie (notes)
@@ -549,7 +557,12 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 String tagName = split[0];  // FloorItemId: or WallItemId:
                 String id = split[1];
                 listNotePad.getItems().add(tagName + " " + id);
-                hiddenFloorList.add(Integer.parseInt(id));
+                if(tagName.equals("FloorItemId:")){
+                    hiddenFloorList.add(Integer.parseInt(id));
+                }
+                else if(tagName.equals("WallItemId:")){
+                    hiddenWallList.add(Integer.parseInt(id));
+                }
                 counterLine.getAndIncrement();
             });
             timer1.start();

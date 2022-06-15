@@ -35,23 +35,19 @@
                 <CheckBox fx:id="checkWalkFast" layoutX="85.0" layoutY="429.0" mnemonicParsing="false" text="Walk Fast" />
             </AnchorPane>
         </Tab>
-        <Tab text="Furnitures">
+        <Tab text="Furniture">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                 <TableView fx:id="tableView" layoutX="13.0" layoutY="13.0" prefHeight="458.0" prefWidth="371.0" />
             </AnchorPane>
         </Tab>
-      <Tab text="Personalized">
-        <content>
-          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-               <children>
-                  <Button layoutX="262.0" layoutY="59.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="62.0" text="Clear" />
-                  <CheckBox fx:id="checkClickHide" layoutX="56.0" layoutY="64.0" mnemonicParsing="false" text="Double click for hide (0) " />
-                  <Button layoutX="129.0" layoutY="14.0" mnemonicParsing="false" onAction="#saveConfig" text="Save" />
-                  <Button layoutX="215.0" layoutY="14.0" mnemonicParsing="false" onAction="#loadConfig" text="Load" />
-                  <ListView fx:id="listNotePad" editable="true" layoutX="76.0" layoutY="111.0" prefHeight="359.0" prefWidth="245.0" />
-               </children>
+        <Tab text="Personalized">
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                <Button layoutX="262.0" layoutY="59.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="62.0" text="Clear" />
+                <CheckBox fx:id="checkClickHide" layoutX="56.0" layoutY="64.0" mnemonicParsing="false" text="Double click for hide (0) " />
+                <Button layoutX="129.0" layoutY="14.0" mnemonicParsing="false" onAction="#saveConfig" text="Save" />
+                <Button layoutX="215.0" layoutY="14.0" mnemonicParsing="false" onAction="#loadConfig" text="Load" />
+                <ListView fx:id="listNotePad" editable="true" layoutX="76.0" layoutY="111.0" prefHeight="359.0" prefWidth="245.0" />
             </AnchorPane>
-        </content>
-      </Tab>
+        </Tab>
     </TabPane>
 </AnchorPane>

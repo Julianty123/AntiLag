@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 // I must admit that adding a Table with CheckBox was possible thanks to WiredSpast
 public class AtomicCheckBoxTableCell extends CheckBoxTableCell<Furniture, AtomicBoolean> {
-
+// Could be of help: https://jenkov.com/tutorials/javafx/tableview.html
     @Override   // This is very important!
     public void updateItem(AtomicBoolean item, boolean empty) {
         super.updateItem(item, empty);
