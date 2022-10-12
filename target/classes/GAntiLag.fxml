@@ -42,11 +42,12 @@
         </Tab>
         <Tab text="Personalized">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                <Button layoutX="262.0" layoutY="59.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="62.0" text="Clear" />
-                <CheckBox fx:id="checkClickHide" layoutX="56.0" layoutY="64.0" mnemonicParsing="false" text="Double click for hide (0) " />
-                <Button layoutX="129.0" layoutY="14.0" mnemonicParsing="false" onAction="#saveConfig" text="Save" />
-                <Button layoutX="215.0" layoutY="14.0" mnemonicParsing="false" onAction="#loadConfig" text="Load" />
-                <ListView fx:id="listNotePad" editable="true" layoutX="76.0" layoutY="111.0" prefHeight="359.0" prefWidth="245.0" />
+                <Button layoutX="242.0" layoutY="45.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="62.0" text="Clear" />
+                <CheckBox fx:id="checkClickHide" layoutX="41.0" layoutY="52.0" mnemonicParsing="false" text="Double click for hide (0) " />
+                <Button layoutX="137.0" layoutY="14.0" mnemonicParsing="false" onAction="#saveConfig" text="Save" />
+                <Button layoutX="199.0" layoutY="14.0" mnemonicParsing="false" onAction="#loadConfig" text="Load" />
+                <ListView fx:id="listNotePad" editable="true" layoutX="68.0" layoutY="82.0" prefHeight="321.0" prefWidth="255.0" />
+            <Text fx:id="txtPath" layoutX="12.0" layoutY="419.0" strokeType="OUTSIDE" strokeWidth="0.0" text="To automatically load the information you should create a GAntiLag folder in: " textAlignment="CENTER" wrappingWidth="373.6708984375" />
             </AnchorPane>
         </Tab>
     </TabPane>

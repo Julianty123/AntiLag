@@ -6,17 +6,21 @@ import gearth.protocol.HPacket;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,7 +36,7 @@ import org.apache.commons.io.IOUtils; // Important library for openConnection (S
 )
 
 public class GAntiLag extends ExtensionForm implements Initializable {
-    public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful
+    public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful (Defines it for the class, so in the instance this attribute doesnt exist).
 
     // private static volatile Instrumentation globalInstrumentation;
     private final static ObservableList<Furniture> dataList = FXCollections.observableArrayList();
@@ -43,7 +47,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public TextField textSteps;
     public TableView<Furniture> tableView;
     public ListView<String> listNotePad;
-
+    public Text txtPath;
     TreeMap<String, Integer> nameToTypeidFloor = new TreeMap<>();
     TreeMap<Integer, String> typeIdToNameFloor = new TreeMap<>();
     TreeMap<Integer,Integer> IdAndIndex = new TreeMap<>();
@@ -90,7 +94,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         codeToDomainMap.put("us", ".com");
     }
 
-    private static TreeMap<String, Integer> directionToCode = new TreeMap<>();
+    private static final TreeMap<String, Integer> directionToCode = new TreeMap<>();
     static {
         directionToCode.put("North", 0);
         directionToCode.put("East", 2);
@@ -136,6 +140,12 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     @Override
     protected void initExtension() {
         RUNNING_INSTANCE = this;
+
+        try {
+            createFolder();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         onConnect((host, port, APIVersion, versionClient, client) -> {
             this.host = host.substring(5, 7);   // Example: Of "game-es.habbo.com" only takes "es"
@@ -573,6 +583,24 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             alert.setHeaderText("We are sorry :(");
             alert.setOnShowing(event -> alert.setContentText("Error loading the configuration, the format could be wrong."));
             alert.show();
+        }
+    }
+
+    public void createFolder() throws IOException {
+        // String path = System.getProperty("user.home") + File.separator;
+
+        // https://stackoverflow.com/questions/320542/how-to-get-the-path-of-a-running-jar-file
+        String pathJar = GAntiLag.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String decodedPathJar = URLDecoder.decode(pathJar, "UTF-8");
+
+        File directorio = new File("Extensions/" + this.getClass().getName());  // ??
+        if (!directorio.exists()) {
+            if (directorio.mkdirs()) {
+                FileWriter fileWriter = new FileWriter(directorio + "/config.txt");
+                fileWriter.flush(); // Vacía el contenido búfer del destino
+                fileWriter.close(); // Vacía el contenido del destino y cierra la secuencia
+            }
+            else { System.out.println("Error al crear directorio"); }
         }
     }
 }
