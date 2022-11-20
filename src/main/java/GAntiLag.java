@@ -138,6 +138,17 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     }
 
     @Override
+    protected void onShow() {
+        System.out.println("GAntiLag Started!");
+        try {
+            // C:\Users\Administrador\Downloads\G-Earth\Extensions\GAntiLag\config.txt
+            readFile();
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found!: " + e.getMessage());
+        }
+    }
+
+    @Override
     protected void initExtension() {
         RUNNING_INSTANCE = this;
 
@@ -307,9 +318,9 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                     if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
                         timer1.start();
                     }
-                }catch (Exception ignored){
+                }catch (Exception e){
                     // Excepcion porque este tipo de furnis no tiene direccion (hFloorItem.getFacing())
-                    System.out.println("Excepcion");
+                    System.out.println("Exception in Objects: " + e.getMessage());
                 }
             }
 
@@ -552,6 +563,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         fileChooser.setTitle("Load Configuration");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text File", "*.txt"));
         File file = fileChooser.showOpenDialog(primaryStage);
+        System.out.println("File: " + file);
 
         try{
             BufferedReader bReader = new BufferedReader(new FileReader(file));   // lee el archivo .txt seleccionado
@@ -587,21 +599,41 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     }
 
     public void createFolder() throws IOException {
-        // String path = System.getProperty("user.home") + File.separator;
+        try {
+            // String path = System.getProperty("user.home") + File.separator;
 
-        // https://stackoverflow.com/questions/320542/how-to-get-the-path-of-a-running-jar-file
-        String pathJar = GAntiLag.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String decodedPathJar = URLDecoder.decode(pathJar, "UTF-8");
+            // https://stackoverflow.com/questions/320542/how-to-get-the-path-of-a-running-jar-file
+            String pathJar = GAntiLag.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPathJar = URLDecoder.decode(pathJar, "UTF-8");
+            System.out.println(" decodedPathJar: " + decodedPathJar);
 
-        File directorio = new File("Extensions/" + this.getClass().getName());  // ??
-        if (!directorio.exists()) {
-            if (directorio.mkdirs()) {
-                FileWriter fileWriter = new FileWriter(directorio + "/config.txt");
-                fileWriter.flush(); // Vacía el contenido búfer del destino
-                fileWriter.close(); // Vacía el contenido del destino y cierra la secuencia
+            // remove jar name
+            // String path = decodedPathJar.substring(0, decodedPathJar.lastIndexOf(File.separator) + 1);
+            System.out.println(" pathSeparator: " + File.pathSeparator);
+            String matriz[] = decodedPathJar.split(File.separatorChar + "");
+            System.out.println(" matriz: " + matriz[0]);
+            // char ch: a.toCharArray()
+            for(int i = 0; i < matriz.length; i++){
+                System.out.println("matriz: " + matriz[i]);
             }
-            else { System.out.println("Error al crear directorio"); }
+
+            File directorio = new File("Extensions/" + this.getClass().getName());  // ??
+            if (!directorio.exists()) {
+                if (directorio.mkdirs()) {
+                    FileWriter fileWriter = new FileWriter(directorio + "/config.txt");
+                    fileWriter.flush(); // Vacía el contenido búfer del destino
+                    fileWriter.close(); // Vacía el contenido del destino y cierra la secuencia
+                }
+                else { System.out.println("Error al crear directorio"); }
+            }
+        } catch (Exception e) {
+            System.out.println("Exception to create the directory: " + e.getMessage());
         }
+    }
+
+    public void readFile() throws FileNotFoundException {
+        BufferedReader bReader = new BufferedReader(new FileReader("config.txt"));   // lee el archivo .txt seleccionado
+        readData(bReader);
     }
 }
             /*

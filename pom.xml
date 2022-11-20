@@ -84,13 +84,13 @@
     <dependencies>
         <dependency>
             <groupId>G-Earth</groupId>
-            <artifactId>G-Earth-Native-Extension</artifactId>
-            <version>1.5.0</version>
+            <artifactId>G-Earth</artifactId>
+            <version>1.5.2</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20220320</version>
+            <version>20220924</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
