@@ -6,21 +6,18 @@ import gearth.protocol.HPacket;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,12 +36,12 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful (Defines it for the class, so in the instance this attribute doesnt exist).
 
     // private static volatile Instrumentation globalInstrumentation;
-    private final static ObservableList<Furniture> dataList = FXCollections.observableArrayList();
+
 
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough,
             checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
             checkHideBubbles, checkClickHide, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
-    public TextField textSteps;
+    public TextField textSteps, txtFilter;
     public TableView<Furniture> tableView;
     public ListView<String> listNotePad;
     public Text txtPath;
@@ -58,23 +55,37 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public int counterFloorItems;
 
+
+    public TableColumn<Furniture, AtomicBoolean> columnCheck;
+    public TableColumn<Furniture, String> columnFurniId;
+    public TableColumn<Furniture, String> columnClassName;
+    ObservableList <Furniture> dataObservableList = FXCollections.observableArrayList();
+
+    FilteredList<Furniture> listaFiltrada = new FilteredList<>(dataObservableList, p -> true);    // Filtro para la lista observable
+    //FilteredList<Furniture> listaFiltrada = new FilteredList<>(FXCollections.observableArrayList(dataObservableList), p -> true);
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        TableColumn<Furniture, AtomicBoolean> checkColumn = new TableColumn<>("Hide");  // Make the column contain the value returned .isActive() or .getActive()
-        TableColumn<Furniture, String> idColumn =  new TableColumn<>("Furni Id Set");
-        TableColumn<Furniture, String> classNameColumn =  new TableColumn<>("Class Name");
+        /*TableColumn<Furniture, AtomicBoolean> checkColumn = new TableColumn<>("Hide");  // Make the column contain the value returned .isActive() or .getActive()
+        // TableColumn<Furniture, String> idColumn =  new TableColumn<>("Furni Id Set");
+        TableColumn<Furniture, ObservableList<String>> idColumn =  new TableColumn<>("Furni Id Set");
+        TableColumn<Furniture, String> classNameColumn =  new TableColumn<>("Class Name");*/
 
-        checkColumn.setCellValueFactory(new PropertyValueFactory<>("active"));
-        checkColumn.setCellFactory(tc -> new AtomicCheckBoxTableCell()); // Make the cell appear as a clickable checkbox
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("furniId"));
-        classNameColumn.setCellValueFactory(new PropertyValueFactory<>("className"));
+        columnCheck.setCellValueFactory(new PropertyValueFactory<>("active"));
+        columnCheck.setCellFactory(tc -> new AtomicCheckBoxTableCell()); // Make the cell appear as a clickable checkbox
+        columnFurniId.setCellValueFactory(new PropertyValueFactory<>("furniId"));
+        columnClassName.setCellValueFactory(new PropertyValueFactory<>("className"));
 
-        idColumn.setPrefWidth(125);
-        classNameColumn.setPrefWidth(150);
+        columnFurniId.setPrefWidth(125);
+        columnClassName.setPrefWidth(150);
 
-        tableView.getColumns().add(checkColumn);  // Add the column to the tableView
-        tableView.getColumns().add(idColumn);
-        tableView.getColumns().add(classNameColumn);
+        /*tableView.getColumns().add(columnCheck);  // Add the column to the tableView
+        tableView.getColumns().add(columnFurniId);
+        tableView.getColumns().add(columnClassName);*/
+
+        tableView.setItems(listaFiltrada);   // Asigna la lista filtrada al TableView
+        tableView.setEditable(true);
     }
 
     /*
@@ -160,6 +171,28 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         onConnect((host, port, APIVersion, versionClient, client) -> {
             this.host = host.substring(5, 7);   // Example: Of "game-es.habbo.com" only takes "es"
+        });
+
+        // Cuando el usuario empieza a digitar...
+        txtFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Se filtra lo que se digita...
+            listaFiltrada.setPredicate(furniture -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                String lowerCaseFilter = newValue.toLowerCase();
+                if (furniture.getClassName().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                } else if (String.valueOf(furniture.getFurniId()).contains(lowerCaseFilter)) {
+                    return true;
+                } else if (furniture.getOwnerName().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                }
+
+                return false;
+            });
+            tableView.refresh();    // Se actualiza la tabla, para mostrar lo digitado...
         });
 
         // Detects when the user close the window (In this project only works here)
@@ -290,7 +323,9 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         // Intercepts the floor items in the room
         intercept(HMessage.Direction.TOCLIENT, "Objects", hMessage -> {
-            tableView.getItems().clear();   flagListforTableView.clear();
+            dataObservableList.clear(); // Elimina los datos de la tabla (Evita UnsupportedOperationException)
+            flagListforTableView.clear();
+
             for (HFloorItem hFloorItem: HFloorItem.parse(hMessage.getPacket())){
                 try{
                     // System.out.println(hFloorItem.getStuff()[0]);
@@ -329,6 +364,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             }
 
             // flagListforTableView.sort(Person.CASE_INSENSITIVE_ORDER);    // Ordena los items de la tabla,segun algun parametro
+
             Map<String, List<Integer>> overview = new HashMap<>();
             for (Furniture entry : flagListforTableView) {
                 overview.putIfAbsent(entry.getClassName(), new ArrayList<>());
@@ -337,13 +373,13 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
             int flagIndex = 0;
             for(List<Integer> ids: overview.values()){
-                tableView.getItems().add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
+                dataObservableList.add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
                         "0.0", "0", 1, "a"));
                 flagIndex++;
             }
             flagIndex = 0;
             for(String className: overview.keySet()){
-                tableView.getItems().set(flagIndex, new Furniture(flagIndex, tableView.getItems().get(flagIndex).getFurniId(), className,
+                dataObservableList.set(flagIndex, new Furniture(flagIndex, dataObservableList.get(flagIndex).getFurniId(), className,
                         0, 0, 0, 0, "0.0", "0", 0, "a"));
                 flagIndex++;
             }

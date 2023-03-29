@@ -5,13 +5,14 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="554.0" prefWidth="424.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GAntiLag">
+<AnchorPane prefHeight="554.0" prefWidth="424.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GAntiLag">
     <TabPane layoutX="14.0" layoutY="16.0" prefHeight="523.0" prefWidth="397.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="General">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
@@ -37,7 +38,14 @@
         </Tab>
         <Tab text="Furniture">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                <TableView fx:id="tableView" layoutX="13.0" layoutY="13.0" prefHeight="458.0" prefWidth="371.0" />
+                <TableView fx:id="tableView" layoutX="13.0" layoutY="42.0" prefHeight="430.0" prefWidth="371.0">
+               <columns>
+                  <TableColumn fx:id="columnCheck" prefWidth="75.0" text="hide" />
+                  <TableColumn fx:id="columnFurniId" prefWidth="75.0" text="furniId" />
+                  <TableColumn fx:id="columnClassName" prefWidth="75.0" text="classname" />
+               </columns></TableView>
+            <TextField fx:id="txtFilter" layoutX="133.0" layoutY="8.0" prefHeight="26.0" prefWidth="157.0" promptText="Type to filter data..." />
+            <Text layoutX="86.0" layoutY="26.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Filter:" />
             </AnchorPane>
         </Tab>
         <Tab text="Personalized">
