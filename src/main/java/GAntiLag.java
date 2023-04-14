@@ -192,7 +192,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
                 return false;
             });
-            tableView.refresh();    // Se actualiza la tabla, para mostrar lo digitado...
+            tableView.refresh();    // Actualiza la tabla, para mostrar lo digitado...
         });
 
         // Detects when the user close the window (In this project only works here)
@@ -260,26 +260,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             }
         });
 
-        intercept(HMessage.Direction.TOCLIENT, "Users", hMessage -> {
-            //IdAndIndex.clear(); Al no borrar la lista esos datos se almacenan ojo con eso
-            try {
-                HPacket hPacket = hMessage.getPacket();
-                HEntity[] roomUsersList = HEntity.parse(hPacket);
-                for (HEntity hEntity: roomUsersList){
-                    if(hEntity.getName().equals(YourUserName)){    // In another room, the index changes
-                        YourIndex = hEntity.getIndex();
-                    }
-                    // El ID del usuario no esta en el Map (Dictionary en c#)
-                    if(!IdAndIndex.containsKey(hEntity.getId())){
-                        IdAndIndex.put(hEntity.getId(), hEntity.getIndex());
-                    }
-                    // Se especifica la key, para remplazar el value por uno nuevo
-                    if(IdAndIndex.containsKey(hEntity.getId())) {
-                        IdAndIndex.replace(hEntity.getId(), hEntity.getIndex());
-                    }
-                }
-            } catch (Exception e) { e.printStackTrace(); }
-        });
+        intercept(HMessage.Direction.TOCLIENT, "Users", this::interceptUsers);
 
         // Intercepts double click to floor item
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
@@ -322,68 +303,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         });
 
         // Intercepts the floor items in the room
-        intercept(HMessage.Direction.TOCLIENT, "Objects", hMessage -> {
-            dataObservableList.clear(); // Elimina los datos de la tabla (Evita UnsupportedOperationException)
-            flagListforTableView.clear();
-
-            for (HFloorItem hFloorItem: HFloorItem.parse(hMessage.getPacket())){
-                try{
-                    // System.out.println(hFloorItem.getStuff()[0]);
-                    /*stateFurni (Obtiene el primer elemento del array, creo)
-                    Necesito encontrar la forma de detectar si el furni es background (no tiene direction, creo)
-                    quizas usando un if y un else if con hFloorItem.getFacing() podria ser util! */
-
-                    List<?> list = Arrays.asList(hFloorItem.getStuff()); // To parse!
-                    if(!list.get(0).equals("")){ // not empty list
-                        flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
-                                hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), (String) list.get(0),hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
-                    }
-                    else if(list.get(0).equals("")){ // empty list
-                        flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
-                                hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), "0", hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
-                    }
-                    counterFloorItems++;
-
-
-                    if(checkHideFloorItems.isSelected()){
-                        // Many packets can be send to client, dosent matter the delay!
-                        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, YourUserID, 0));
-                        hMessage.setBlocked(true); // Solve bug wtf
-                    }
-                    if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
-                        timer1.start();
-                    }
-                }catch (Exception e){
-                    // Excepcion porque este tipo de furnis no tiene direccion (hFloorItem.getFacing())
-                    System.out.println("Exception in Objects: " + e.getMessage());
-                }
-            }
-
-            if(checkClickThrough.isSelected()){ // Allows again "Click Through"
-                sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, true));
-            }
-
-            // flagListforTableView.sort(Person.CASE_INSENSITIVE_ORDER);    // Ordena los items de la tabla,segun algun parametro
-
-            Map<String, List<Integer>> overview = new HashMap<>();
-            for (Furniture entry : flagListforTableView) {
-                overview.putIfAbsent(entry.getClassName(), new ArrayList<>());
-                overview.get(entry.getClassName()).add(Integer.parseInt(entry.getFurniId()));
-            }
-
-            int flagIndex = 0;
-            for(List<Integer> ids: overview.values()){
-                dataObservableList.add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
-                        "0.0", "0", 1, "a"));
-                flagIndex++;
-            }
-            flagIndex = 0;
-            for(String className: overview.keySet()){
-                dataObservableList.set(flagIndex, new Furniture(flagIndex, dataObservableList.get(flagIndex).getFurniId(), className,
-                        0, 0, 0, 0, "0.0", "0", 0, "a"));
-                flagIndex++;
-            }
-        });
+        intercept(HMessage.Direction.TOCLIENT, "Objects", this::interceptObjects);
 
         // Intercept all wall items in the room
         intercept(HMessage.Direction.TOCLIENT, "Items", hMessage -> {
@@ -449,50 +369,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             }
         });
 
-        intercept(HMessage.Direction.TOCLIENT, "UserUpdate", hMessage -> {
-            for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hMessage.getPacket())){
-                int CurrentIndex = hEntityUpdate.getIndex();  // HEntityUpdate class allows get UserIndex
-                if(YourIndex == CurrentIndex){
-                    int currentCoordX, currentCoordY;
-                    String currentDirection = hEntityUpdate.getBodyFacing().toString();
-                    try {
-                        currentCoordX = hEntityUpdate.getMovingTo().getX(); // "Updates coords quickly"
-                        currentCoordY = hEntityUpdate.getMovingTo().getY();
-                    }
-                    catch (NullPointerException nullPointerException) {
-                        // Gets coords when you arrives the room. Its possible get coords by intercepting "RoomEntryTile" packet! but its not the same
-                        currentCoordX = hEntityUpdate.getTile().getX();
-                        currentCoordY = hEntityUpdate.getTile().getY();
-                    }
-                    // Necesita ser mejorado creo!
-                    if(checkWalkFast.isSelected()){
-                        System.out.println(currentDirection);
-                        System.out.println("x: " + currentCoordX + " y: " + currentCoordY);
-                        if(currentDirection.equals("North")){
-                            walkToX = currentCoordX;    walkToY = currentCoordY - Integer.parseInt(textSteps.getText());
-                            timerFixBug.start();    checkWalkFast.setSelected(false);
-                        }
-                        else if(currentDirection.equals("South")){
-                            walkToX = currentCoordX;    walkToY = currentCoordY + Integer.parseInt(textSteps.getText());
-                            timerFixBug.start();    checkWalkFast.setSelected(false);
-                        }
-                        else if(currentDirection.equals("East")){
-                            walkToX = currentCoordX + Integer.parseInt(textSteps.getText());    walkToY = currentCoordY;
-                            timerFixBug.start();    checkWalkFast.setSelected(false);
-                        }
-                        else if(currentDirection.equals("West")){
-                            walkToX = currentCoordX - Integer.parseInt(textSteps.getText());    walkToY = currentCoordY;
-                            timerFixBug.start();    checkWalkFast.setSelected(false);
-                        }
-                    }
-                    if(currentCoordX == walkToX && currentCoordY == walkToY) { timerFixBug.stop(); }    // Detiene el timer cuando alcanza la posicion
-                }
-
-                if(checkHideSign.isSelected() && hEntityUpdate.getSign() != null){
-                    hMessage.setBlocked(true);
-                }
-            }
-        });
+        intercept(HMessage.Direction.TOCLIENT, "UserUpdate", this::interceptUserUpdate);
 
         // Thanks to Achantur for the special character, you can see it here: https://github.com/achantur/AntiBobba
         intercept(HMessage.Direction.TOSERVER, "Chat", hMessage -> {
@@ -504,6 +381,134 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 bypass(message, color, index);
             }
         });
+    }
+
+    public void interceptUsers(HMessage hMessage){
+        try {
+            HPacket hPacket = hMessage.getPacket();
+            HEntity[] roomUsersList = HEntity.parse(hPacket);
+            for (HEntity hEntity: roomUsersList){
+                if(hEntity.getName().equals(YourUserName)){    // In another room, the index changes
+                    YourIndex = hEntity.getIndex();
+                }
+                // El ID del usuario no esta en el Map (Dictionary en c#)
+                if(!IdAndIndex.containsKey(hEntity.getId())){
+                    IdAndIndex.put(hEntity.getId(), hEntity.getIndex());
+                }
+                // Se especifica la key, para remplazar el value por uno nuevo
+                if(IdAndIndex.containsKey(hEntity.getId())) {
+                    IdAndIndex.replace(hEntity.getId(), hEntity.getIndex());
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    public void interceptObjects(HMessage hMessage){
+        dataObservableList.clear(); // Elimina los datos de la tabla (Evita UnsupportedOperationException)
+        flagListforTableView.clear();
+
+        for (HFloorItem hFloorItem: HFloorItem.parse(hMessage.getPacket())){
+            try{
+                // System.out.println(hFloorItem.getStuff()[0]);
+                    /*stateFurni (Obtiene el primer elemento del array, creo)
+                    Necesito encontrar la forma de detectar si el furni es background (no tiene direction, creo)
+                    quizas usando un if y un else if con hFloorItem.getFacing() podria ser util! */
+
+                List<?> list = Arrays.asList(hFloorItem.getStuff()); // To parse!
+                if(!list.get(0).equals("")){ // not empty list
+                    flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                            hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), (String) list.get(0),hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                }
+                else if(list.get(0).equals("")){ // empty list
+                    flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
+                            hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), "0", hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                }
+                counterFloorItems++;
+
+
+                if(checkHideFloorItems.isSelected()){
+                    // Many packets can be send to client, dosent matter the delay!
+                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, YourUserID, 0));
+                    hMessage.setBlocked(true); // Solve bug wtf
+                }
+                if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
+                    timer1.start();
+                }
+            }catch (Exception e){
+                // Excepcion porque este tipo de furnis no tiene direccion (hFloorItem.getFacing())
+                System.out.println("Exception in Objects: " + e.getMessage());
+            }
+        }
+
+        if(checkClickThrough.isSelected()){ // Allows again "Click Through"
+            sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, true));
+        }
+
+        // flagListforTableView.sort(Person.CASE_INSENSITIVE_ORDER);    // Ordena los items de la tabla,segun algun parametro
+
+        Map<String, List<Integer>> overview = new HashMap<>();
+        for (Furniture entry : flagListforTableView) {
+            overview.putIfAbsent(entry.getClassName(), new ArrayList<>());
+            overview.get(entry.getClassName()).add(Integer.parseInt(entry.getFurniId()));
+        }
+
+        int flagIndex = 0;
+        for(List<Integer> ids: overview.values()){
+            dataObservableList.add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
+                    "0.0", "0", 1, "a"));
+            flagIndex++;
+        }
+        flagIndex = 0;
+        for(String className: overview.keySet()){
+            dataObservableList.set(flagIndex, new Furniture(flagIndex, dataObservableList.get(flagIndex).getFurniId(), className,
+                    0, 0, 0, 0, "0.0", "0", 0, "a"));
+            flagIndex++;
+        }
+    }
+
+    public void interceptUserUpdate(HMessage hMessage){
+        for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hMessage.getPacket())){
+            int CurrentIndex = hEntityUpdate.getIndex();  // HEntityUpdate class allows get UserIndex
+            if(YourIndex == CurrentIndex){
+                int currentCoordX, currentCoordY;
+                String currentDirection = hEntityUpdate.getBodyFacing().toString();
+                try {
+                    currentCoordX = hEntityUpdate.getMovingTo().getX(); // "Updates coords quickly"
+                    currentCoordY = hEntityUpdate.getMovingTo().getY();
+                }
+                catch (NullPointerException nullPointerException) {
+                    // Gets coords when you arrives the room. Its possible get coords by intercepting "RoomEntryTile" packet! but its not the same
+                    currentCoordX = hEntityUpdate.getTile().getX();
+                    currentCoordY = hEntityUpdate.getTile().getY();
+                }
+                // Necesita ser mejorado creo!
+                if(checkWalkFast.isSelected()){
+                    System.out.println(currentDirection);
+                    System.out.println("x: " + currentCoordX + " y: " + currentCoordY);
+                    if(currentDirection.equals("North")){
+                        walkToX = currentCoordX;    walkToY = currentCoordY - Integer.parseInt(textSteps.getText());
+                        timerFixBug.start();    checkWalkFast.setSelected(false);
+                    }
+                    else if(currentDirection.equals("South")){
+                        walkToX = currentCoordX;    walkToY = currentCoordY + Integer.parseInt(textSteps.getText());
+                        timerFixBug.start();    checkWalkFast.setSelected(false);
+                    }
+                    else if(currentDirection.equals("East")){
+                        walkToX = currentCoordX + Integer.parseInt(textSteps.getText());    walkToY = currentCoordY;
+                        timerFixBug.start();    checkWalkFast.setSelected(false);
+                    }
+                    else if(currentDirection.equals("West")){
+                        walkToX = currentCoordX - Integer.parseInt(textSteps.getText());    walkToY = currentCoordY;
+                        timerFixBug.start();    checkWalkFast.setSelected(false);
+                    }
+                }
+                if(currentCoordX == walkToX && currentCoordY == walkToY) { timerFixBug.stop(); }    // Detiene el timer cuando alcanza la posicion
+            }
+
+            if(checkHideSign.isSelected() && hEntityUpdate.getSign() != null){
+                hMessage.setBlocked(true);
+            }
+        }
     }
 
     public void sendPackets(){
