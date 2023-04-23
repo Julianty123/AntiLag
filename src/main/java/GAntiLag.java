@@ -139,6 +139,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         }).start();
     }
 
+    // This method is called when the extension is opened
     @Override
     protected void onShow() {
         System.out.println("GAntiLag Started!");
@@ -150,8 +151,24 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         }
     }
 
+    // This method is called when the extension is closed
+    @Override
+    protected void onHide() {
+        sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, false));
+        checkClickThrough.setSelected(false);
+        checkOneClickHide.setSelected(false);  checkOneClickHide.setDisable(false);   checkDisableDouble.setSelected(false);
+        checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
+        checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
+        checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
+        checkIgnoreWhispers.setSelected(false); checkAntiBobba.setSelected(false);
+        sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));     YourIndex = -1;
+    }
+
     @Override
     protected void initExtension() {
+        // Detects when the user close the window (not the best implementation)
+        // primaryStage.setOnCloseRequest(e -> {});
+
         RUNNING_INSTANCE = this;
 
         try {
@@ -184,18 +201,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 return false;
             });
             tableView.refresh();    // Actualiza la tabla, para mostrar lo digitado...
-        });
-
-        // Detects when the user close the window (In this project only works here)
-        primaryStage.setOnCloseRequest(e -> {
-            sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, false));
-            checkClickThrough.setSelected(false);
-            checkOneClickHide.setSelected(false);  checkOneClickHide.setDisable(false);   checkDisableDouble.setSelected(false);
-            checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
-            checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
-            checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
-            checkIgnoreWhispers.setSelected(false); checkAntiBobba.setSelected(false);
-            sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));     YourIndex = -1;
         });
 
         // Happens when you check or uncheck the checkBox control!
