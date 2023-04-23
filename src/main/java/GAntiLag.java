@@ -38,9 +38,9 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     // private static volatile Instrumentation globalInstrumentation;
 
 
-    public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough,
+    public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough, checkOneClickHide,
             checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
-            checkHideBubbles, checkClickHide, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
+            checkHideBubbles, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
     public TextField textSteps, txtFilter;
     public TableView<Furniture> tableView;
     public ListView<String> listNotePad;
@@ -67,11 +67,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        /*TableColumn<Furniture, AtomicBoolean> checkColumn = new TableColumn<>("Hide");  // Make the column contain the value returned .isActive() or .getActive()
-        // TableColumn<Furniture, String> idColumn =  new TableColumn<>("Furni Id Set");
-        TableColumn<Furniture, ObservableList<String>> idColumn =  new TableColumn<>("Furni Id Set");
-        TableColumn<Furniture, String> classNameColumn =  new TableColumn<>("Class Name");*/
-
         columnCheck.setCellValueFactory(new PropertyValueFactory<>("active"));
         columnCheck.setCellFactory(tc -> new AtomicCheckBoxTableCell()); // Make the cell appear as a clickable checkbox
         columnFurniId.setCellValueFactory(new PropertyValueFactory<>("furniId"));
@@ -79,10 +74,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         columnFurniId.setPrefWidth(125);
         columnClassName.setPrefWidth(150);
-
-        /*tableView.getColumns().add(columnCheck);  // Add the column to the tableView
-        tableView.getColumns().add(columnFurniId);
-        tableView.getColumns().add(columnClassName);*/
 
         tableView.setItems(listaFiltrada);   // Asigna la lista filtrada al TableView
         tableView.setEditable(true);
@@ -92,7 +83,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     "doormat_plain*2", "doormat_plain*3", "doormat_love"
             ,"suncity_c19_floor", "xmas_c17_pavement", "xmas_c17_smallpavement", "xmas_c15_stone", "xmas11_woodfloor" */
 
-    private static TreeMap<String, String> codeToDomainMap = new TreeMap<>();
+    private static final TreeMap<String, String> codeToDomainMap = new TreeMap<>();
     static {
         codeToDomainMap.put("br", ".com.br");
         codeToDomainMap.put("de", ".de");
@@ -199,7 +190,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         primaryStage.setOnCloseRequest(e -> {
             sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, false));
             checkClickThrough.setSelected(false);
-            checkClickHide.setSelected(false);  checkClickHide.setDisable(false);   checkDisableDouble.setSelected(false);
+            checkOneClickHide.setSelected(false);  checkOneClickHide.setDisable(false);   checkDisableDouble.setSelected(false);
             checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
             checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
             checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
@@ -264,41 +255,43 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         // Intercepts double click to floor item
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
-            if(checkDisableDouble.isSelected()){
-                hMessage.setBlocked(true);  // Blocks double click
-            }
-            if(checkClickHide.isSelected()){
+            if(checkDisableDouble.isSelected()){ hMessage.setBlocked(true); }   // Blocks double click
+        });
+
+        // Intercepts one click to furniture
+        intercept(HMessage.Direction.TOSERVER, "ClickFurni", hMessage -> {
+            if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenFloorList.add(furniId);
                 sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
-                                String.valueOf(furniId), false, YourUserID, 0)); // Hide Floor Item
+                        String.valueOf(furniId), false, YourUserID, 0)); // Hide Floor Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
                     listNotePad.getItems().add("FloorItemId: " + furniId);
-                    checkClickHide.setText("Double click for hide (" + count + ")");
+                    checkOneClickHide.setText("One click to hide (" + count + ")");
                 });
             }
         });
 
         // Intercepts double click to wall item
         intercept(HMessage.Direction.TOSERVER, "UseWallItem", hMessage -> {
-            if(checkClickHide.isSelected()){
+            if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
                         String.valueOf(furniId), YourUserID)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
                     listNotePad.getItems().add("WallItemId: " + furniId);
-                    checkClickHide.setText("Double click for hide (" + count + ")");
+                    checkOneClickHide.setText("One click to hide (" + count + ")");
                 });
             }
         });
         intercept(HMessage.Direction.TOSERVER, "GetItemData", hMessage -> { // When you give click in a stickie (notes)
-            if(checkClickHide.isSelected()){
+            if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
                         String.valueOf(furniId), YourUserID)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
-                Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + count + ")"));
+                Platform.runLater(()-> checkOneClickHide.setText("One click to hide (" + count + ")"));
             }
         });
 
@@ -556,15 +549,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         }
     }
 
-    public void handleDoubleClick() {
-        if(checkDisableDouble.isSelected()){
-            checkClickHide.setSelected(false);  checkClickHide.setDisable(true);
-        }
-        else {
-            checkClickHide.setDisable(false);
-        }
-    }
-
     public void handleHiddenList() {
         if(!checkHideFloorItems.isSelected()){
             /* Coming soon!
@@ -577,7 +561,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
         }
         hiddenFloorList.clear(); hiddenWallList.clear();    listNotePad.getItems().clear();
-        checkClickHide.setText("Double click for hide (0)");
+        checkOneClickHide.setText("One click to hide (0)");
     }
 
     public void saveConfig() throws RuntimeException, IOException {
@@ -629,7 +613,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 counterLine.getAndIncrement();
             });
             timer1.start();
-            Platform.runLater(()-> checkClickHide.setText("Double click for hide (" + counterLine + ")"));
+            Platform.runLater(()-> checkOneClickHide.setText("One click to hide (" + counterLine + ")"));
         }catch (RuntimeException runtimeException){
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.initOwner(primaryStage);
@@ -677,18 +661,3 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         readData(bReader);
     }
 }
-            /*
-            String[] overview = tableView.getItems()
-                    .stream()
-                    .map(Person::getClassName)
-                    .distinct()
-                    .map(className -> {
-                        String[] ids = tableView.getItems()
-                                .stream()
-                                .filter(item -> item.getClassName().equals(className))
-                                .map(item -> Integer.toString(Integer.parseInt(item.getFurniId())))
-                                .toArray(String[]::new);
-                        return String.join(", ", ids) + "\t" + className;
-                    })
-                    .toArray(String[]::new);
-            */

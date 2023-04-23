@@ -25,7 +25,7 @@
                     <CheckBox fx:id="checkHideFloorItems" layoutX="23.0" layoutY="97.0" mnemonicParsing="false" text="Hide FloorItems" />
                     <CheckBox fx:id="checkHideWallItems" layoutX="23.0" layoutY="121.0" mnemonicParsing="false" text="Hide WallItems" />
                     <CheckBox fx:id="checkHideBubbles" layoutX="23.0" layoutY="143.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Bubbles (You and the others)" />
-                    <CheckBox fx:id="checkDisableDouble" layoutX="23.0" layoutY="54.0" mnemonicParsing="false" onAction="#handleDoubleClick" text="Disable double click" />
+                    <CheckBox fx:id="checkDisableDouble" layoutX="23.0" layoutY="54.0" mnemonicParsing="false" text="Disable double click" />
                     <CheckBox fx:id="checkUsersToRemove" layoutX="23.0" layoutY="76.0" mnemonicParsing="false" text="Click users to remove" />
                     <CheckBox fx:id="checkAntiBobba" layoutX="23.0" layoutY="319.0" mnemonicParsing="false" text="Anti Bobba (Vulnerable to flood)" />
                <CheckBox fx:id="checkHideSign" layoutX="23.0" layoutY="217.0" mnemonicParsing="false" onAction="#Click_through" text="Hide Sign" />
@@ -50,12 +50,12 @@
         </Tab>
         <Tab text="Personalized">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                <Button layoutX="242.0" layoutY="45.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="62.0" text="Clear" />
-                <CheckBox fx:id="checkClickHide" layoutX="41.0" layoutY="52.0" mnemonicParsing="false" text="Double click for hide (0) " />
                 <Button layoutX="137.0" layoutY="14.0" mnemonicParsing="false" onAction="#saveConfig" text="Save" />
                 <Button layoutX="199.0" layoutY="14.0" mnemonicParsing="false" onAction="#loadConfig" text="Load" />
                 <ListView fx:id="listNotePad" editable="true" layoutX="68.0" layoutY="82.0" prefHeight="321.0" prefWidth="255.0" />
             <Text fx:id="txtPath" layoutX="12.0" layoutY="419.0" strokeType="OUTSIDE" strokeWidth="0.0" text="To automatically load the information you should create a GAntiLag folder in: " textAlignment="CENTER" wrappingWidth="373.6708984375" />
+            <CheckBox fx:id="checkOneClickHide" layoutX="68.0" layoutY="48.0" mnemonicParsing="false" text="One click to hide (0)" />
+                 <Button layoutX="235.0" layoutY="41.0" mnemonicParsing="false" onAction="#handleHiddenList" prefHeight="31.0" prefWidth="75.0" text="Clear" />
             </AnchorPane>
         </Tab>
     </TabPane>
