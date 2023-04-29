@@ -1,3 +1,5 @@
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import java.util.Comparator;
@@ -14,6 +16,7 @@ public class Furniture
     private AtomicBoolean active;  // Permite saber si el control esta chequeado o no
     private StringProperty furniId;
     private StringProperty className;
+    private IntegerProperty count;
 
     /*          or s:
     {in:ObjectAdd}{i:1640379877}{i:233}{i:10}{i:3}{i:0}{s:"0.0"}{s:"1.5625"}{i:0}{i:0}{s:"1"}{i:-1}{i:1}{i:87447635}{s:"pablito"}
@@ -43,13 +46,14 @@ public class Furniture
     private String ownerName;
 
     // Constructors
-    public Furniture(Integer indexItem, String furniId, String className, int furniTypeId, int furniCoordX, int furniCoordY,
-                     int furniDirection, String furniElevation, String furniState, int ownerId, String ownerName)
+    public Furniture(Integer indexItem, String furniId, String className, int count, int furniTypeId, int furniCoordX,
+                     int furniCoordY, int furniDirection, String furniElevation, String furniState, int ownerId, String ownerName)
     {
         this.indexItem = indexItem;
         this.active = new AtomicBoolean(false); // Initiate unchecked!
         this.furniId = new SimpleStringProperty(furniId);
         this.className = new SimpleStringProperty(className);
+        this.count = new SimpleIntegerProperty(count);
         this.furniTypeId = furniTypeId;
         this.furniCoordX = furniCoordX;
         this.furniCoordY = furniCoordY;
@@ -100,6 +104,18 @@ public class Furniture
 
     public void setClassName(String className) {
         this.className.set(className);
+    }
+
+    public int getCount() {
+        return count.get();
+    }
+
+    public IntegerProperty countProperty() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count.set(count);
     }
 
     public int getFurniTypeId() {

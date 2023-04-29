@@ -43,6 +43,7 @@
                   <TableColumn fx:id="columnCheck" prefWidth="75.0" text="hide" />
                   <TableColumn fx:id="columnFurniId" prefWidth="75.0" text="furniId" />
                   <TableColumn fx:id="columnClassName" prefWidth="75.0" text="classname" />
+                  <TableColumn fx:id="columnCount" prefWidth="75.0" text="count" />
                </columns></TableView>
             <TextField fx:id="txtFilter" layoutX="133.0" layoutY="8.0" prefHeight="26.0" prefWidth="157.0" promptText="Type to filter data..." />
             <Text layoutX="86.0" layoutY="26.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Filter:" />

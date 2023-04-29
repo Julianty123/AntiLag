@@ -59,6 +59,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public TableColumn<Furniture, AtomicBoolean> columnCheck;
     public TableColumn<Furniture, String> columnFurniId;
     public TableColumn<Furniture, String> columnClassName;
+    public TableColumn<Furniture, Integer> columnCount;
     ObservableList <Furniture> dataObservableList = FXCollections.observableArrayList();
 
     FilteredList<Furniture> listaFiltrada = new FilteredList<>(dataObservableList, p -> true);    // Filtro para la lista observable
@@ -71,6 +72,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         columnCheck.setCellFactory(tc -> new AtomicCheckBoxTableCell()); // Make the cell appear as a clickable checkbox
         columnFurniId.setCellValueFactory(new PropertyValueFactory<>("furniId"));
         columnClassName.setCellValueFactory(new PropertyValueFactory<>("className"));
+        columnCount.setCellValueFactory(new PropertyValueFactory<>("count"));
 
         columnFurniId.setPrefWidth(125);
         columnClassName.setPrefWidth(150);
@@ -413,14 +415,38 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                     quizas usando un if y un else if con hFloorItem.getFacing() podria ser util! */
 
                 List<?> list = Arrays.asList(hFloorItem.getStuff()); // To parse!
-                if(!list.get(0).equals("")){ // not empty list
-                    flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
-                            hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), (String) list.get(0),hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                System.out.println(list.get(0) + " " + list);
+                if(list.get(0).equals("")){
+                    flagListforTableView.add(new Furniture(
+                            counterFloorItems,
+                            String.valueOf(hFloorItem.getId()),
+                            typeIdToNameFloor.get(hFloorItem.getTypeId()),
+                            0,
+                            hFloorItem.getTypeId(),
+                            hFloorItem.getTile().getX(),
+                            hFloorItem.getTile().getY(),
+                            directionToCode.get(hFloorItem.getFacing().toString()),
+                            String.valueOf(hFloorItem.getTile().getZ()),
+                            "0",
+                            hFloorItem.getOwnerId(),
+                            hFloorItem.getOwnerName()));
                 }
-                else if(list.get(0).equals("")){ // empty list
-                    flagListforTableView.add(new Furniture(counterFloorItems, String.valueOf(hFloorItem.getId()), typeIdToNameFloor.get(hFloorItem.getTypeId()), hFloorItem.getTypeId(), hFloorItem.getTile().getX(),
-                            hFloorItem.getTile().getY(), directionToCode.get(hFloorItem.getFacing().toString()), String.valueOf(hFloorItem.getTile().getZ()), "0", hFloorItem.getOwnerId(), hFloorItem.getOwnerName()));
+                else{
+                    int size = list.size();
+                    flagListforTableView.add(new Furniture(
+                            counterFloorItems,
+                            String.valueOf(hFloorItem.getId()),
+                            typeIdToNameFloor.get(hFloorItem.getTypeId()),
+                            0,
+                            hFloorItem.getTypeId(),
+                            hFloorItem.getTile().getX(),
+                            hFloorItem.getTile().getY(),
+                            directionToCode.get(hFloorItem.getFacing().toString()),
+                            String.valueOf(hFloorItem.getTile().getZ()),
+                            (String) list.get(0),hFloorItem.getOwnerId(),
+                            hFloorItem.getOwnerName()));
                 }
+
                 counterFloorItems++;
 
 
@@ -452,14 +478,16 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         int flagIndex = 0;
         for(List<Integer> ids: overview.values()){
-            dataObservableList.add(new Furniture(flagIndex, ids.toString(), "", 0, 0, 0, 0,
+            System.out.println(ids.toString());
+            dataObservableList.add(new Furniture(flagIndex, ids.toString(), "", ids.size(), 0,0, 0, 0,
                     "0.0", "0", 1, "a"));
             flagIndex++;
         }
+
         flagIndex = 0;
         for(String className: overview.keySet()){
             dataObservableList.set(flagIndex, new Furniture(flagIndex, dataObservableList.get(flagIndex).getFurniId(), className,
-                    0, 0, 0, 0, "0.0", "0", 0, "a"));
+                    dataObservableList.get(flagIndex).getCount(), 0,0, 0, 0, "0.0", "0", 0, "a"));
             flagIndex++;
         }
     }
