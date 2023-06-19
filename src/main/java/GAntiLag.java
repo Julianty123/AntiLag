@@ -40,7 +40,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough, checkOneClickHide,
             checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
-            checkHideBubbles, checkHideSign, checkDisableDouble, checkUsersToRemove, checkAntiBobba, checkWalkFast;
+            checkHideBubbles, checkHideSign, checkDisableDouble, checkUsersToRemove, checkWalkFast;
     public TextField textSteps, txtFilter;
     public TableView<Furniture> tableView;
     public ListView<String> listNotePad;
@@ -162,7 +162,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         checkUsersToRemove.setSelected(false);  IdAndIndex.clear(); checkHideFloorItems.setSelected(false);
         checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
         checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
-        checkIgnoreWhispers.setSelected(false); checkAntiBobba.setSelected(false);
+        checkIgnoreWhispers.setSelected(false);
         sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));     YourIndex = -1;
     }
 
@@ -376,10 +376,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             String message = hMessage.getPacket().readString();
             int color = hMessage.getPacket().readInteger();
             int index = hMessage.getPacket().readInteger();
-            if (checkAntiBobba.isSelected()) {
-                hMessage.setBlocked(true);
-                bypass(message, color, index);
-            }
         });
     }
 
@@ -547,7 +543,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     }
 
     private void getGameFurniData() throws Exception{
-        String str = "https://www.habbo%s/gamedata/furnidata_json/1"; // You can see the furni is walkable or no with canstandon
+        String str = "https://www.habbo%s/gamedata/furnidata_json/1";
         JSONObject jsonObj = new JSONObject(IOUtils.toString(new URL(String.format(str, codeToDomainMap.get(host))).openStream(), StandardCharsets.UTF_8));
         JSONArray floorJson = jsonObj.getJSONObject("roomitemtypes").getJSONArray("furnitype");
         floorJson.forEach(o -> {
@@ -561,16 +557,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public void stopTimer(){
         timer1.stop();
-    }
-
-    private void bypass(String message, int color, int index) {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (char ch : message.toCharArray()) {
-            stringBuilder.append("ӵӵ"); // ӵӵ Its the special character
-            stringBuilder.append(ch);
-        }
-        stringBuilder.append("ӵӵ");
-        sendToServer(new HPacket("Chat", HMessage.Direction.TOSERVER, stringBuilder.toString(), color, index));
     }
 
     public void Click_through(){
