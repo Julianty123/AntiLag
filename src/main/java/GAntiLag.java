@@ -29,7 +29,7 @@ import org.apache.commons.io.IOUtils; // Important library for openConnection (S
 @ExtensionInfo(
         Title = "GAntiLag",
         Description = "Allows you useful and funny options",
-        Version = "1.3.2",
+        Version = "1.3.3",
         Author = "Julianty"
 )
 
@@ -108,18 +108,18 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public int walkToX;
     public int walkToY;
-    public int YourUserID;
+    public int yourUserID;
     public String YourUserName;
-    public int YourIndex = -1;
+    public int yourIndex = -1;
 
     // To fix the bug... bruh :(
     public int countTimerFixBug;
     Timer timer1 = new Timer(1, e -> {
         for (Integer furniId : hiddenFloorList) {
-            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, YourUserID, 0));
+            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, yourUserID, 0));
         }
         for (Integer furniId : hiddenWallList) {
-            sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), YourUserID));
+            sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), yourUserID));
         }
         countTimerFixBug++;
         System.out.println("Timer Fix Bug: " + countTimerFixBug);
@@ -153,7 +153,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         checkHideWallItems.setSelected(false);  checkHideBubbles.setSelected(false);    checkHideSpeech.setSelected(false);
         checkHideShoutOut.setSelected(false);   checkHideDance.setSelected(false);  checkHideSign.setSelected(false);
         checkIgnoreWhispers.setSelected(false);
-        sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));     YourIndex = -1;
+        sendToServer(new HPacket("{out:GetHeightMap}")); yourIndex = -1;
     }
 
     @Override
@@ -195,8 +195,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         // Happens when you check or uncheck the checkBox control!
         checkHideFloorItems.setOnAction(e-> {
-            sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
-
+            sendToServer(new HPacket("{out:GetHeightMap}"));
             // Coming soon! ...
             /* for(Furniture person: flagListforTableView){
                 if(checkHideFloorItems.isSelected()){
@@ -214,28 +213,26 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             }*/
         });
 
-        checkHideWallItems.setOnAction(e -> sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER)));
+
+        checkHideWallItems.setOnAction(e -> sendToServer(new HPacket("{out:GetHeightMap}")));
 
         checkUsersToRemove.setOnAction(e -> {
             // Coming soon i need to fix this
-            if(!checkUsersToRemove.isSelected()){
-                sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
-            }
+            if(!checkUsersToRemove.isSelected()) sendToServer(new HPacket("{out:GetHeightMap}"));
         });
 
         // Intercepts the client's response and does something ...
         intercept(HMessage.Direction.TOCLIENT, "UserObject", hMessage -> {
             // Be careful, the data must be obtained in the order of the packet
-            YourUserID = hMessage.getPacket().readInteger();
+            yourUserID = hMessage.getPacket().readInteger();
             YourUserName = hMessage.getPacket().readString();
         });
 
         // Response of packet AvatarExpression
         intercept(HMessage.Direction.TOCLIENT, "Expression", hMessage -> {
             // First integer is index in room, second is animation id, i think
-            if(primaryStage.isShowing() && YourIndex == -1){ // this could avoid any bug
-                YourIndex = hMessage.getPacket().readInteger();
-            }
+            // this could avoid any bug
+            if(primaryStage.isShowing() && yourIndex == -1) yourIndex = hMessage.getPacket().readInteger();
         });
 
         // Cuando clickea a un usuario se ejecuta esto
@@ -250,7 +247,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         // Intercepts double click to floor item
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
-            if(checkDisableDouble.isSelected()){ hMessage.setBlocked(true); }   // Blocks double click
+            if(checkDisableDouble.isSelected()) hMessage.setBlocked(true);  // Blocks double click
         });
 
         // Intercepts one click to furniture
@@ -258,7 +255,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenFloorList.add(furniId);
                 sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), false, YourUserID, 0)); // Hide Floor Item
+                        String.valueOf(furniId), false, yourUserID, 0)); // Hide Floor Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
                     listNotePad.getItems().add("FloorItemId: " + furniId);
@@ -272,7 +269,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), YourUserID)); // Hide Wall Item
+                        String.valueOf(furniId), yourUserID)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
                     listNotePad.getItems().add("WallItemId: " + furniId);
@@ -284,7 +281,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), YourUserID)); // Hide Wall Item
+                        String.valueOf(furniId), yourUserID)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> checkOneClickHide.setText("One click to hide (" + count + ")"));
             }
@@ -299,7 +296,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 for (HWallItem hWallItem: HWallItem.parse(hMessage.getPacket())){
                     if(checkHideWallItems.isSelected()){
                         sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                                String.valueOf(hWallItem.getId()), YourUserID)); // "Hide" wall items
+                                String.valueOf(hWallItem.getId()), yourUserID)); // "Hide" wall items
                         hMessage.setBlocked(true);  // Fix the bug
                     }
                     if(hiddenWallList.contains(hWallItem.getId()) && primaryStage.isShowing()){
@@ -318,43 +315,31 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         // Ignora cuando un usuario escribe en negrilla (Me ignoro pero los demas NO a mi)
         intercept(HMessage.Direction.TOCLIENT, "Shout", hMessage -> {
-            if(checkHideShoutOut.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkHideShoutOut.isSelected()) hMessage.setBlocked(true);
         });
 
         intercept(HMessage.Direction.TOCLIENT, "AvatarEffect", hMessage -> {
-            if(checkHideEffect.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkHideEffect.isSelected()) hMessage.setBlocked(true);
         });
 
         // Ignora la gente que te susurra (Me ignoro pero los demas NO a mi)
         intercept(HMessage.Direction.TOCLIENT, "Whisper", hMessage -> {
-            if(checkIgnoreWhispers.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkIgnoreWhispers.isSelected()) hMessage.setBlocked(true);
         });
 
         // Esconde las burbujas de los usuarios (si no estan digitando en ese momento)
         intercept(HMessage.Direction.TOCLIENT, "UserTyping", hMessage -> {
-            if(checkHideBubbles.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkHideBubbles.isSelected()) hMessage.setBlocked(true);
         });
 
         // Esconde TU burbuja (Lado del servidor, la gente no vera cuando susurres!)
         intercept(HMessage.Direction.TOSERVER, "StartTyping", hMessage -> {
-            if(checkHideBubbles.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkHideBubbles.isSelected()) hMessage.setBlocked(true);
         });
 
         // Bloquea el baile (si no esta bailando en ese momento)
         intercept(HMessage.Direction.TOCLIENT, "Dance", hMessage -> {
-            if(checkHideDance.isSelected()){
-                hMessage.setBlocked(true);
-            }
+            if(checkHideDance.isSelected()) hMessage.setBlocked(true);
         });
 
         intercept(HMessage.Direction.TOCLIENT, "UserUpdate", this::interceptUserUpdate);
@@ -373,7 +358,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             HEntity[] roomUsersList = HEntity.parse(hPacket);
             for (HEntity hEntity: roomUsersList){
                 if(hEntity.getName().equals(YourUserName)){    // In another room, the index changes
-                    YourIndex = hEntity.getIndex();
+                    yourIndex = hEntity.getIndex();
                 }
                 // El ID del usuario no esta en el Map (Dictionary en c#)
                 if(!IdAndIndex.containsKey(hEntity.getId())){
@@ -436,7 +421,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
                 if(checkHideFloorItems.isSelected()){
                     // Many packets can be send to client, dosent matter the delay!
-                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, YourUserID, 0));
+                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, yourUserID, 0));
                     hMessage.setBlocked(true); // Solve bug wtf
                 }
                 if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
@@ -479,7 +464,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public void interceptUserUpdate(HMessage hMessage){
         for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hMessage.getPacket())){
             int CurrentIndex = hEntityUpdate.getIndex();  // HEntityUpdate class allows get UserIndex
-            if(YourIndex == CurrentIndex){
+            if(yourIndex == CurrentIndex){
                 int currentCoordX, currentCoordY;
                 String currentDirection = hEntityUpdate.getBodyFacing().toString();
                 try {
@@ -523,9 +508,9 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public void sendPackets(){
         // The packet is sent to the server and a response is obtained from the CLIENT !!
-        sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
+        sendToServer(new HPacket("{out:InfoRetrieve}"));
         // When its sent, get UserIndex without restart room
-        sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));
+        sendToServer(new HPacket("{out:AvatarExpression}{i:0}"));
         // When its sent, get wallitems, flooritems and other things without restart room
         sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
     }
@@ -547,12 +532,8 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                     nameToTypeidFloor.put(item.getString("classname"), item.getInt("id"));
                     typeIdToNameFloor.put(item.getInt("id"), item.getString("classname"));
                 });
-
-                System.out.println(nameToTypeidFloor);
                 System.out.println("Gamedata Retrieved!");
 
-                //String str = "https://www.habbo%s/gamedata/furnidata_json/1";
-                // JSONObject jsonObj = new JSONObject(IOUtils.toString(new URL(String.format(str, mapHostToDomain.get(host))).openStream(), StandardCharsets.UTF_8));
                 sendPackets(); // Once the API is loaded, the packets are sent to get the room data
             }catch (IOException e){
                 System.out.println("MalformedURLException: " + e.getMessage());
@@ -582,7 +563,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                             floorObject.furniCoordX, floorObject.furniCoordY, 0, floorObject.furniElevation, floorObject.idkString1, 0, 0, "1", -1, 1, 51157174, YourUserName));
                 }
             }*/
-            sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
+            sendToServer(new HPacket("{out:GetHeightMap}"));
         }
         hiddenFloorList.clear(); hiddenWallList.clear();    listNotePad.getItems().clear();
         checkOneClickHide.setText("One click to hide (0)");
