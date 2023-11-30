@@ -16,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -36,7 +37,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public static GAntiLag RUNNING_INSTANCE; // For use this class in other, its useful (Defines it for the class, so in the instance this attribute doesnt exist).
 
     // private static volatile Instrumentation globalInstrumentation;
-
 
     public CheckBox checkHideSpeech, checkHideShoutOut, checkClickThrough, checkOneClickHide,
             checkHideDance, checkHideEffect, checkIgnoreWhispers, checkHideFloorItems, checkHideWallItems,
@@ -65,7 +65,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     FilteredList<Furniture> listaFiltrada = new FilteredList<>(dataObservableList, p -> true);    // Filtro para la lista observable
     //FilteredList<Furniture> listaFiltrada = new FilteredList<>(FXCollections.observableArrayList(dataObservableList), p -> true);
 
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         columnCheck.setCellValueFactory(new PropertyValueFactory<>("active"));
@@ -85,17 +84,18 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     "doormat_plain*2", "doormat_plain*3", "doormat_love"
             ,"suncity_c19_floor", "xmas_c17_pavement", "xmas_c17_smallpavement", "xmas_c15_stone", "xmas11_woodfloor" */
 
-    private static final TreeMap<String, String> codeToDomainMap = new TreeMap<>();
+    private static final TreeMap<String, String> mapHostToDomain = new TreeMap<>();
     static {
-        codeToDomainMap.put("br", ".com.br");
-        codeToDomainMap.put("de", ".de");
-        codeToDomainMap.put("es", ".es");
-        codeToDomainMap.put("fi", ".fi");
-        codeToDomainMap.put("fr", ".fr");
-        codeToDomainMap.put("it", ".it");
-        codeToDomainMap.put("nl", ".nl");
-        codeToDomainMap.put("tr", ".com.tr");
-        codeToDomainMap.put("us", ".com");
+        mapHostToDomain.put("game-es.habbo.com", "https://www.habbo.es/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-br.habbo.com", "https://www.habbo.com.br/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-tr.habbo.com", "https://www.habbo.com.tr/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-us.habbo.com", "https://www.habbo.com/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-de.habbo.com", "https://www.habbo.de/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-fi.habbo.com", "https://www.habbo.fi/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-fr.habbo.com", "https://www.habbo.fr/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-it.habbo.com", "https://www.habbo.it/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-nl.habbo.com", "https://www.habbo.nl/gamedata/furnidata_json/1");
+        mapHostToDomain.put("game-s2.habbo.com", "https://sandbox.habbo.com/gamedata/furnidata_json/1");
     }
 
     private static final TreeMap<String, Integer> directionToCode = new TreeMap<>();
@@ -106,7 +106,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         directionToCode.put("West", 6);
     }
 
-    public String host;
     public int walkToX;
     public int walkToY;
     public int YourUserID;
@@ -131,15 +130,6 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     // Necessary to solve a "bug", i think you have to click at the correct time, so with this you will give many clicks..
     Timer timerFixBug = new Timer(1, e -> sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, walkToX, walkToY)));
-
-    @Override
-    protected void onStartConnection() {
-        new Thread(() -> {
-            System.out.println("Getting GameData...");
-            try { getGameFurniData(); } catch (Exception ignored) { }
-            System.out.println("Gamedata Retrieved!");
-        }).start();
-    }
 
     // This method is called when the extension is opened
     @Override
@@ -179,9 +169,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             throw new RuntimeException(e);
         }
 
-        onConnect((host, port, APIVersion, versionClient, client) -> {
-            this.host = host.substring(5, 7);   // Example: Of "game-es.habbo.com" only takes "es"
-        });
+        onConnect((host, port, APIVersion, versionClient, client) -> gameFurnitureData(host));
 
         // Cuando el usuario empieza a digitar...
         txtFilter.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -542,17 +530,34 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
     }
 
-    private void getGameFurniData() throws Exception{
-        String str = "https://www.habbo%s/gamedata/furnidata_json/1";
-        JSONObject jsonObj = new JSONObject(IOUtils.toString(new URL(String.format(str, codeToDomainMap.get(host))).openStream(), StandardCharsets.UTF_8));
-        JSONArray floorJson = jsonObj.getJSONObject("roomitemtypes").getJSONArray("furnitype");
-        floorJson.forEach(o -> {
-            JSONObject item = (JSONObject)o;
-            nameToTypeidFloor.put(item.getString("classname"), item.getInt("id"));
-            typeIdToNameFloor.put(item.getInt("id"), item.getString("classname"));
-        });
+    private void gameFurnitureData(String host){
+        new Thread(()->{
+            try{
+                System.out.println("Getting GameData...");
+                String url = mapHostToDomain.get(host); // Throws exception if you are connecting to holos
+                URLConnection connection = (new URL(url)).openConnection();
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+                connection.connect();
 
-        sendPackets(); // Once the API is loaded, the packets are sent to get the room data
+                JSONObject jsonObj = new JSONObject(IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8));
+
+                JSONArray floorJson = jsonObj.getJSONObject("roomitemtypes").getJSONArray("furnitype");
+                floorJson.forEach(o -> {
+                    JSONObject item = (JSONObject)o;
+                    nameToTypeidFloor.put(item.getString("classname"), item.getInt("id"));
+                    typeIdToNameFloor.put(item.getInt("id"), item.getString("classname"));
+                });
+
+                System.out.println(nameToTypeidFloor);
+                System.out.println("Gamedata Retrieved!");
+
+                //String str = "https://www.habbo%s/gamedata/furnidata_json/1";
+                // JSONObject jsonObj = new JSONObject(IOUtils.toString(new URL(String.format(str, mapHostToDomain.get(host))).openStream(), StandardCharsets.UTF_8));
+                sendPackets(); // Once the API is loaded, the packets are sent to get the room data
+            }catch (IOException e){
+                System.out.println("MalformedURLException: " + e.getMessage());
+            }
+        }).start();
     }
 
     public void stopTimer(){

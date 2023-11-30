@@ -5,7 +5,6 @@ import javafx.beans.property.StringProperty;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class Furniture
 {
     // Esto es para ordenar los elementos de esta clase segun el parametro getClassName
