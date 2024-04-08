@@ -26,7 +26,7 @@ public class AtomicCheckBoxTableCell extends CheckBoxTableCell<Furniture, Atomic
                 if(item.get()){ // checkBox is selected!
                     for(String id: ids){
                         // {in:ObjectRemove}{s:"438444797"}{b:false}{i:31657128}{i:0}
-                        String strPacket = "{in:ObjectRemove}{s:\"" + id + "\"}{b:false}{i:" + GAntiLag.RUNNING_INSTANCE.yourUserID + "}{i:0}";
+                        String strPacket = "{in:ObjectRemove}{s:\"" + id + "\"}{b:false}{i:" + GAntiLag.RUNNING_INSTANCE.yourUserId + "}{i:0}";
                         GAntiLag.RUNNING_INSTANCE.sendToClient(new HPacket(strPacket));
                     }
                 }

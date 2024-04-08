@@ -85,12 +85,12 @@
         <dependency>
             <groupId>G-Earth</groupId>
             <artifactId>G-Earth</artifactId>
-            <version>1.5.3</version>
+            <version>1.5.2</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId> <!-- Also necessary for Dark Theme, no idea why -->
-            <version>20230227</version>
+            <version>20231013</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

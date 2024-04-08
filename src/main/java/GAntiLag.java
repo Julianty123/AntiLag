@@ -108,7 +108,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     public int walkToX;
     public int walkToY;
-    public int yourUserID;
+    public int yourUserId;
     public String YourUserName;
     public int yourIndex = -1;
 
@@ -116,10 +116,10 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public int countTimerFixBug;
     Timer timer1 = new Timer(1, e -> {
         for (Integer furniId : hiddenFloorList) {
-            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, yourUserID, 0));
+            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), false, yourUserId, 0));
         }
         for (Integer furniId : hiddenWallList) {
-            sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), yourUserID));
+            sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT, String.valueOf(furniId), yourUserId));
         }
         countTimerFixBug++;
         System.out.println("Timer Fix Bug: " + countTimerFixBug);
@@ -163,11 +163,8 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
         RUNNING_INSTANCE = this;
 
-        try {
-            createFolder();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        try { createFolder(); }
+        catch (IOException e) { throw new RuntimeException(e); }
 
         onConnect((host, port, APIVersion, versionClient, client) -> gameFurnitureData(host));
 
@@ -224,7 +221,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         // Intercepts the client's response and does something ...
         intercept(HMessage.Direction.TOCLIENT, "UserObject", hMessage -> {
             // Be careful, the data must be obtained in the order of the packet
-            yourUserID = hMessage.getPacket().readInteger();
+            yourUserId = hMessage.getPacket().readInteger();
             YourUserName = hMessage.getPacket().readString();
         });
 
@@ -253,12 +250,12 @@ public class GAntiLag extends ExtensionForm implements Initializable {
         // Intercepts one click to furniture
         intercept(HMessage.Direction.TOSERVER, "ClickFurni", hMessage -> {
             if(checkOneClickHide.isSelected()){
-                int furniId = hMessage.getPacket().readInteger();   hiddenFloorList.add(furniId);
+                int furnitureId = hMessage.getPacket().readInteger();   hiddenFloorList.add(furnitureId);
                 sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), false, yourUserID, 0)); // Hide Floor Item
+                        String.valueOf(furnitureId), false, yourUserId, 0)); // Hide Floor Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
-                    listNotePad.getItems().add("FloorItemId: " + furniId);
+                    listNotePad.getItems().add("FloorItemId: " + furnitureId);
                     checkOneClickHide.setText("One click to hide (" + count + ")");
                 });
             }
@@ -269,7 +266,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), yourUserID)); // Hide Wall Item
+                        String.valueOf(furniId), yourUserId)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> {
                     listNotePad.getItems().add("WallItemId: " + furniId);
@@ -281,7 +278,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             if(checkOneClickHide.isSelected()){
                 int furniId = hMessage.getPacket().readInteger();   hiddenWallList.add(furniId);
                 sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                        String.valueOf(furniId), yourUserID)); // Hide Wall Item
+                        String.valueOf(furniId), yourUserId)); // Hide Wall Item
                 int count = hiddenFloorList.size() + hiddenWallList.size();
                 Platform.runLater(()-> checkOneClickHide.setText("One click to hide (" + count + ")"));
             }
@@ -296,7 +293,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
                 for (HWallItem hWallItem: HWallItem.parse(hMessage.getPacket())){
                     if(checkHideWallItems.isSelected()){
                         sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
-                                String.valueOf(hWallItem.getId()), yourUserID)); // "Hide" wall items
+                                String.valueOf(hWallItem.getId()), yourUserId)); // "Hide" wall items
                         hMessage.setBlocked(true);  // Fix the bug
                     }
                     if(hiddenWallList.contains(hWallItem.getId()) && primaryStage.isShowing()){
@@ -421,7 +418,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
                 if(checkHideFloorItems.isSelected()){
                     // Many packets can be send to client, dosent matter the delay!
-                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, yourUserID, 0));
+                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, String.valueOf(hFloorItem.getId()), false, yourUserId, 0));
                     hMessage.setBlocked(true); // Solve bug wtf
                 }
                 if(hiddenFloorList.contains(hFloorItem.getId()) && primaryStage.isShowing()){
@@ -635,26 +632,26 @@ public class GAntiLag extends ExtensionForm implements Initializable {
             // https://stackoverflow.com/questions/320542/how-to-get-the-path-of-a-running-jar-file
             String pathJar = GAntiLag.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPathJar = URLDecoder.decode(pathJar, "UTF-8");
-            System.out.println(" decodedPathJar: " + decodedPathJar);
+            System.out.println("decodedPathJar: " + decodedPathJar);
 
             // remove jar name
             // String path = decodedPathJar.substring(0, decodedPathJar.lastIndexOf(File.separator) + 1);
-            System.out.println(" pathSeparator: " + File.pathSeparator);
+            System.out.println("pathSeparator: " + File.pathSeparator);
             String matriz[] = decodedPathJar.split(File.separatorChar + "");
-            System.out.println(" matriz: " + matriz[0]);
+            System.out.println("matriz: " + matriz[0]);
             // char ch: a.toCharArray()
             for(int i = 0; i < matriz.length; i++){
                 System.out.println("matriz: " + matriz[i]);
             }
 
-            File directorio = new File("Extensions/" + this.getClass().getName());  // ??
-            if (!directorio.exists()) {
-                if (directorio.mkdirs()) {
-                    FileWriter fileWriter = new FileWriter(directorio + "/config.txt");
+            File directory = new File("Extensions/" + this.getClass().getName());  // ??
+            if (!directory.exists()) {
+                if (directory.mkdirs()) {
+                    FileWriter fileWriter = new FileWriter(directory + "/config.txt");
                     fileWriter.flush(); // Vacía el contenido búfer del destino
                     fileWriter.close(); // Vacía el contenido del destino y cierra la secuencia
                 }
-                else { System.out.println("Error al crear directorio"); }
+                else System.out.println("Error when creating the directory");
             }
         } catch (Exception e) {
             System.out.println("Exception to create the directory: " + e.getMessage());
