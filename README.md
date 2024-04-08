@@ -22,6 +22,10 @@ Here you can find all the information to develop your first extension: https://g
 [Java 8]: <https://www.java.com/es/download/ie_manual.jsp>
 [Java JDK 8]: <https://www.oracle.com/co/java/technologies/javase/javase8-archive-downloads.html>
 
+### Notice
+If there is an active "Furni hider" in the room, you will not be able to see the hidden furniture. 😪
+
 ### ❤️ Support me ❤️
 If you like my work, please consider supporting me. It will help me to create more projects and to continue maintain them.
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://www.buymeacoffee.com/julianty)
