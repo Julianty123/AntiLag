@@ -18,6 +18,8 @@
                 <includes>
                     <include>**/*.fxml</include>
                     <include>**/*.css</include>
+                    <include>**/*.jfif</include> <!-- Added for the favicon -->
+                    <include>**/*.png</include>
                 </includes>
             </resource>
         </resources>

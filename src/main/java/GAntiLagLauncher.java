@@ -8,9 +8,12 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import java.io.InputStream;
 
 public class GAntiLagLauncher extends ExtensionFormCreator {
 
@@ -24,6 +27,14 @@ public class GAntiLagLauncher extends ExtensionFormCreator {
         primaryStage.getScene().setFill(Color.TRANSPARENT);
         primaryStage.setResizable(false);
         primaryStage.setAlwaysOnTop(true);
+
+        // Best way to set the icon (Works in both IDE and compiled application)
+        String resourceName = "imageJ.jfif";
+        InputStream inputStream = GAntiLagLauncher.class.getClassLoader().getResourceAsStream(resourceName);
+        if (inputStream != null) {
+            Image image = new Image(inputStream);
+            primaryStage.getIcons().add(image);
+        }
 
         return loader.getController();
     }
