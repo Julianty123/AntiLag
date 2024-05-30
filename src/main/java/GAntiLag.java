@@ -163,6 +163,19 @@ public class GAntiLag extends ExtensionForm implements Initializable {
 
     @Override
     protected void initExtension() {
+
+        System.out.println("    /$$$$$           /$$ /$$                       /$$              ");
+        System.out.println("   |__  $$          | $$|__/                      | $$              ");
+        System.out.println("      | $$ /$$   /$$| $$ /$$  /$$$$$$  / $$$$$$$  /$$$$$$  /$$   /$$");
+        System.out.println("      | $$| $$  | $$| $$| $$ |____  $$| $$__   $$ |_$$_/  | $$  | $$");
+        System.out.println(" /$$  | $$| $$  | $$| $$| $$  /$$$$$$$| $$  \\  $$ | $$    | $$  | $$");
+        System.out.println("| $$  | $$| $$  | $$| $$| $$ /$$__  $$| $$  |  $$ | $$ /$$| $$  | $$");
+        System.out.println("| $$$$$$/ |  $$$$$$/| $$| $$|  $$$$$$$| $$  |  $$ |  $$$$/|  $$$$$$$");
+        System.out.println(" \\______/  \\______/ |__/|__/ \\_______/|__/  |__/   \\___/   \\____  $$");
+        System.out.println("                                                           /$$  | $$");
+        System.out.println("                                                          |  $$$$$$/");
+        System.out.println("                                                           \\______/ ");
+
         // Detects when the user close the window (not the best implementation)
         // primaryStage.setOnCloseRequest(e -> {});
 
