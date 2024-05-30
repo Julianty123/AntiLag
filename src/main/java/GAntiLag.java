@@ -7,11 +7,15 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
@@ -29,7 +33,7 @@ import org.apache.commons.io.IOUtils; // Important library for openConnection (S
 @ExtensionInfo(
         Title = "GAntiLag",
         Description = "Allows you useful and funny options",
-        Version = "1.3.3",
+        Version = "1.3.4",
         Author = "Julianty"
 )
 
@@ -54,6 +58,7 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     // LinkedList<Integer> wallListNotePad = new LinkedList<>(); coming soon!
 
     public int counterFloorItems;
+    double xFrame, yFrame;
 
 
     public TableColumn<Furniture, AtomicBoolean> columnCheck;
@@ -661,5 +666,25 @@ public class GAntiLag extends ExtensionForm implements Initializable {
     public void readFile() throws FileNotFoundException {
         BufferedReader bReader = new BufferedReader(new FileReader("config.txt"));   // lee el archivo .txt seleccionado
         readData(bReader);
+    }
+
+    public void onMouseDragged(MouseEvent mouseEvent) {
+        Stage stage = (Stage) ((Node)mouseEvent.getSource()).getScene().getWindow();
+        stage.setX(mouseEvent.getScreenX() - xFrame);
+        stage.setY(mouseEvent.getScreenY() - yFrame);
+    }
+
+    public void onMousePressed(MouseEvent mouseEvent) {
+        xFrame = mouseEvent.getSceneX();
+        yFrame = mouseEvent.getSceneY();
+    }
+
+    public void onMinimize(ActionEvent event) {
+        Stage stage = (Stage) ((Node)event.getSource()).getScene().getWindow();
+        stage.setIconified(true);
+    }
+
+    public void onClose() {
+        primaryStage.close();
     }
 }

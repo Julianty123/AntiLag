@@ -12,8 +12,8 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="554.0" prefWidth="424.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GAntiLag">
-    <TabPane layoutX="14.0" layoutY="16.0" prefHeight="523.0" prefWidth="397.0" tabClosingPolicy="UNAVAILABLE">
+<AnchorPane onMouseDragged="#onMouseDragged" onMousePressed="#onMousePressed" prefHeight="509.0" prefWidth="400.0" stylesheets="@dark-theme.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GAntiLag">
+    <TabPane layoutX="1.0" layoutY="33.0" prefHeight="523.0" prefWidth="397.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="General">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                 <Pane layoutX="48.0" layoutY="28.0" prefHeight="348.0" prefWidth="301.0" style="-fx-border-radius: 20px; -fx-border-color: #888888;">
@@ -59,4 +59,6 @@
             </AnchorPane>
         </Tab>
     </TabPane>
+   <Button layoutX="332.0" mnemonicParsing="false" onAction="#onMinimize" prefHeight="32.0" prefWidth="31.0" text="-" />
+   <Button layoutX="363.0" mnemonicParsing="false" onAction="#onClose" text="X" />
 </AnchorPane>
