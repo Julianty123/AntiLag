@@ -1,3 +1,5 @@
+![Stars](https://img.shields.io/github/stars/Julianty123/AntiLag)
+
 ## _To Debug_
 
 You need to install the following:
